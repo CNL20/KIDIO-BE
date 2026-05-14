@@ -1,0 +1,6 @@
+@KIDIO.API_HostAddress = http://localhost:5109
+
+GET {{KIDIO.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
