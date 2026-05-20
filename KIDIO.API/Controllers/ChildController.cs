@@ -1,0 +1,73 @@
+﻿using KIDIO.Business.DTOs.Child;
+using KIDIO.Business.Interfaces;
+using KIDIO.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace KIDIO.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class ChildController : ControllerBase
+{
+    private readonly IChildService _childService;
+
+    public ChildController(IChildService childService)
+    {
+        _childService = childService;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<List<ChildSummaryResponse>>>> GetChildren(
+        CancellationToken ct)
+    {
+        var result = await _childService.GetChildrenByParentAsync(GetCurrentUserId(), ct);
+        return Ok(ApiResponse<List<ChildSummaryResponse>>.Ok(result));
+    }
+
+    [HttpGet("{childId:guid}")]
+    public async Task<ActionResult<ApiResponse<ChildResponse>>> GetChild(
+        Guid childId, CancellationToken ct)
+    {
+        var result = await _childService.GetChildByIdAsync(childId, GetCurrentUserId(), ct);
+        return Ok(ApiResponse<ChildResponse>.Ok(result));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<ChildResponse>>> CreateChild(
+        [FromBody] CreateChildRequest request, CancellationToken ct)
+    {
+        var result = await _childService.CreateChildAsync(GetCurrentUserId(), request, ct);
+        return CreatedAtAction(
+            nameof(GetChild),
+            new { childId = result.Id },
+            ApiResponse<ChildResponse>.Ok(result, "Child profile created."));
+    }
+
+    [HttpPut("{childId:guid}")]
+    public async Task<ActionResult<ApiResponse<ChildResponse>>> UpdateChild(
+        Guid childId, [FromBody] UpdateChildRequest request, CancellationToken ct)
+    {
+        var result = await _childService.UpdateChildAsync(childId, GetCurrentUserId(), request, ct);
+        return Ok(ApiResponse<ChildResponse>.Ok(result, "Child profile updated."));
+    }
+
+    [HttpDelete("{childId:guid}")]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteChild(
+        Guid childId, CancellationToken ct)
+    {
+        await _childService.DeleteChildAsync(childId, GetCurrentUserId(), ct);
+        return Ok(ApiResponse<object>.Ok(null, "Child profile deleted."));
+    }
+
+    // ── Helper ──────────────────────────────────────────────
+
+    private Guid GetCurrentUserId()
+    {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("User ID not found in token.");
+        return Guid.Parse(value);
+    }
+}

@@ -49,7 +49,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // =========================
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IChildService, ChildService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================
