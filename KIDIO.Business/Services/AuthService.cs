@@ -25,15 +25,18 @@ namespace KIDIO.Business.Services
         private readonly IUnitOfWork _uow;
         private readonly JwtSettings _jwt;
         private readonly GoogleOAuthSettings _google;
+        private readonly AdminSettings _admin;
 
         public AuthService(
         IUnitOfWork uow,
         IOptions<JwtSettings> jwt,
-        IOptions<GoogleOAuthSettings> google)
+        IOptions<GoogleOAuthSettings> google,
+        IOptions<AdminSettings> admin)
         {
             _uow = uow;
             _jwt = jwt.Value;
             _google = google.Value;
+            _admin = admin.Value;
         }
         public async Task<AuthResponse> GoogleLoginAsync(string idToken, CancellationToken ct = default)
         {
@@ -52,6 +55,9 @@ namespace KIDIO.Business.Services
                 throw new UnauthorizedException("Invalid Google token.");
             }
 
+            var isAdminEmail = _admin.Emails.Any(email =>
+                string.Equals(email, payload.Email, StringComparison.OrdinalIgnoreCase));
+
             // 2. Tìm hoặc tạo user
             var user = await _uow.Users.FirstOrDefaultAsync(
                 u => u.GoogleId == payload.Subject || u.Email == payload.Email, ct);
@@ -64,12 +70,15 @@ namespace KIDIO.Business.Services
                     DisplayName = payload.Name ?? payload.Email,
                     AvatarUrl = payload.Picture,
                     GoogleId = payload.Subject,
-                    Role = UserRole.Parent
+                    Role = isAdminEmail ? UserRole.Admin : UserRole.Parent
                 };
                 await _uow.Users.AddAsync(user, ct);
             }
             else
             {
+                if (isAdminEmail && user.Role != UserRole.Admin)
+                    user.Role = UserRole.Admin;
+
                 // Cập nhật GoogleId nếu login bằng email lần đầu
                 if (user.GoogleId is null)
                     user.GoogleId = payload.Subject;

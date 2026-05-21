@@ -29,6 +29,7 @@ namespace KIDIO.Data.Entities
             modelBuilder.Entity<Child>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Lesson>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Topic>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Vocabulary>().HasQueryFilter(x => !x.IsDeleted);
 
             // User
             modelBuilder.Entity<User>(e =>
@@ -56,6 +57,12 @@ namespace KIDIO.Data.Entities
                  .HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(p => p.Lesson).WithMany(l => l.Progresses)
                  .HasForeignKey(p => p.LessonId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Topic
+            modelBuilder.Entity<Topic>(e =>
+            {
+                e.HasIndex(t => t.OrderIndex).IsUnique();
             });
 
             // Lesson -> Topic

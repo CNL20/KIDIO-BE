@@ -25,6 +25,8 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<GoogleOAuthSettings>(
     builder.Configuration.GetSection("GoogleOAuth"));
+builder.Services.Configure<AdminSettings>(
+    builder.Configuration.GetSection("AdminSettings"));
 builder.Services.Configure<FacebookOAuthSettings>(
     builder.Configuration.GetSection("FacebookOAuth"));
 builder.Services.Configure<AISettings>(
@@ -50,6 +52,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IChildService, ChildService>();
+builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================
