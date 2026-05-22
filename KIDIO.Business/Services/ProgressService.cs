@@ -1,4 +1,5 @@
-﻿using KIDIO.Business.DTOs.Progress;
+﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.DTOs.Progress;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -10,10 +11,12 @@ namespace KIDIO.Business.Services;
 public class ProgressService : IProgressService
 {
     private readonly IUnitOfWork _uow;
+    private readonly IAchievementService _achievementService;
 
-    public ProgressService(IUnitOfWork uow)
+    public ProgressService(IUnitOfWork uow, IAchievementService achievementService)
     {
         _uow = uow;
+        _achievementService = achievementService;
     }
 
     public async Task<ProgressResponse> SubmitProgressAsync(
@@ -87,7 +90,9 @@ public class ProgressService : IProgressService
 
         await _uow.SaveChangesAsync(ct);
 
-        return await BuildProgressResponseAsync(existing, ct);
+        var achievementResult = await _achievementService.CheckAndUnlockAsync(child.Id, ct);
+
+        return await BuildProgressResponseAsync(existing, achievementResult.NewAchievements, ct);
     }
 
     public async Task<List<ProgressResponse>> GetProgressByChildAsync(
@@ -102,7 +107,7 @@ public class ProgressService : IProgressService
             .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
             .ToListAsync(ct);
 
-        return progresses.Select(MapToResponse).ToList();
+        return progresses.Select(p => MapToResponse(p)).ToList();
     }
 
     public async Task<ProgressResponse?> GetLessonProgressAsync(
@@ -179,7 +184,7 @@ public class ProgressService : IProgressService
             .Take(safeCount)
             .ToListAsync(ct);
 
-        return progresses.Select(MapToResponse).ToList();
+        return progresses.Select(p => MapToResponse(p)).ToList();
     }
 
     public async Task<List<ProgressResponse>> GetCompletedLessonsAsync(
@@ -194,7 +199,7 @@ public class ProgressService : IProgressService
             .OrderByDescending(p => p.CompletedAt ?? p.UpdatedAt ?? p.CreatedAt)
             .ToListAsync(ct);
 
-        return progresses.Select(MapToResponse).ToList();
+        return progresses.Select(p => MapToResponse(p)).ToList();
     }
 
     // ── Helpers ─────────────────────────────────────────────
@@ -266,7 +271,9 @@ public class ProgressService : IProgressService
     }
 
     private async Task<ProgressResponse> BuildProgressResponseAsync(
-        LessonProgress p, CancellationToken ct)
+        LessonProgress p,
+        List<AchievementResponse> newAchievements,
+        CancellationToken ct)
     {
         var progress = await _uow.LessonProgresses.Query()
             .Include(x => x.Child)
@@ -274,10 +281,12 @@ public class ProgressService : IProgressService
             .FirstOrDefaultAsync(x => x.Id == p.Id, ct)
             ?? throw new NotFoundException("Progress");
 
-        return MapToResponse(progress);
+        return MapToResponse(progress, newAchievements);
     }
 
-    private static ProgressResponse MapToResponse(LessonProgress p) => new(
+    private static ProgressResponse MapToResponse(
+        LessonProgress p,
+        List<AchievementResponse>? newAchievements = null) => new(
         Id: p.Id,
         ChildId: p.ChildId,
         ChildName: p.Child?.Name ?? string.Empty,
@@ -289,6 +298,7 @@ public class ProgressService : IProgressService
         TimeSpentSeconds: p.TimeSpentSeconds,
         AttemptCount: p.AttemptCount,
         CompletedAt: p.CompletedAt,
-        CreatedAt: p.CreatedAt
+        CreatedAt: p.CreatedAt,
+        NewAchievements: newAchievements ?? []
     );
 }

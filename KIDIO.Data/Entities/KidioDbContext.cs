@@ -17,6 +17,7 @@ namespace KIDIO.Data.Entities
         public DbSet<Lesson> Lessons => Set<Lesson>();
         public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
         public DbSet<Achievement> Achievements => Set<Achievement>();
+        public DbSet<AchievementDefinition> AchievementDefinitions => Set<AchievementDefinition>();
         public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();
         public DbSet<PronunciationLog> PronunciationLogs => Set<PronunciationLog>();
 
@@ -30,6 +31,7 @@ namespace KIDIO.Data.Entities
             modelBuilder.Entity<Lesson>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Topic>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Vocabulary>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<AchievementDefinition>().HasQueryFilter(x => !x.IsDeleted);
 
             // User
             modelBuilder.Entity<User>(e =>

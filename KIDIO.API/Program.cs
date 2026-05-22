@@ -56,6 +56,7 @@ builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IVocabularyService, VocabularyService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================

@@ -1,4 +1,6 @@
-﻿namespace KIDIO.Business.DTOs.Progress;
+﻿using KIDIO.Business.DTOs.Achievement;
+
+namespace KIDIO.Business.DTOs.Progress;
 
 public record SubmitProgressRequest(
     Guid ChildId,
@@ -19,7 +21,8 @@ public record ProgressResponse(
     int TimeSpentSeconds,
     int AttemptCount,
     DateTime? CompletedAt,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<AchievementResponse> NewAchievements
 );
 
 public record ChildProgressSummary(

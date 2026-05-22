@@ -63,11 +63,12 @@ public class ChildController : ControllerBase
     }
 
     [HttpPatch("{childId:guid}/restore")]
+    [Authorize]
     public async Task<ActionResult<ApiResponse<object>>> RestoreChild(
         Guid childId, CancellationToken ct)
     {
         await _childService.RestoreChildAsync(childId, GetCurrentUserId(), ct);
-        return Ok(ApiResponse<object>.Ok(null, "Child profile restored."));
+        return Ok(ApiResponse<object>.Ok(new(), "Child profile restored."));
     }
 
     [HttpDelete("{childId:guid}/hard")]
@@ -76,7 +77,7 @@ public class ChildController : ControllerBase
         Guid childId, CancellationToken ct)
     {
         await _childService.HardDeleteChildAsync(childId, ct);
-        return Ok(ApiResponse<object>.Ok(null, "Child profile permanently deleted."));
+        return Ok(ApiResponse<object>.Ok(new(), "Child profile permanently deleted."));
     }
 
     // ── Helper ──────────────────────────────────────────────

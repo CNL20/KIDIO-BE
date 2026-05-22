@@ -15,6 +15,7 @@ namespace KIDIO.Data.Repositories
         IRepository<Lesson> Lessons { get; }
         IRepository<LessonProgress> LessonProgresses { get; }
         IRepository<Achievement> Achievements { get; }
+        IRepository<AchievementDefinition> AchievementDefinitions { get; }
         IRepository<Vocabulary> Vocabularies { get; }
         IRepository<PronunciationLog> PronunciationLogs { get; }
 

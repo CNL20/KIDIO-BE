@@ -17,6 +17,7 @@ namespace KIDIO.Data.Repositories
         public IRepository<Lesson> Lessons { get; }
         public IRepository<LessonProgress> LessonProgresses { get; }
         public IRepository<Achievement> Achievements { get; }
+        public IRepository<AchievementDefinition> AchievementDefinitions { get; }
         public IRepository<Vocabulary> Vocabularies { get; }
         public IRepository<PronunciationLog> PronunciationLogs { get; }
 
@@ -29,6 +30,7 @@ namespace KIDIO.Data.Repositories
             Lessons = new Repository<Lesson>(context);
             LessonProgresses = new Repository<LessonProgress>(context);
             Achievements = new Repository<Achievement>(context);
+            AchievementDefinitions = new Repository<AchievementDefinition>(context);
             Vocabularies = new Repository<Vocabulary>(context);
             PronunciationLogs = new Repository<PronunciationLog>(context);
         }
