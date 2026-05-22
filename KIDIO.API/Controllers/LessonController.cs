@@ -95,4 +95,22 @@ public class LessonController : ControllerBase
         await _lessonService.UnpublishLessonAsync(lessonId, ct);
         return Ok(ApiResponse<object>.Ok(null!, "Lesson unpublished."));
     }
+
+    [HttpPatch("{lessonId:guid}/restore")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> Restore(
+        Guid lessonId, CancellationToken ct)
+    {
+        await _lessonService.RestoreLessonAsync(lessonId, ct);
+        return Ok(ApiResponse<object>.Ok(null!, "Lesson restored."));
+    }
+
+    [HttpDelete("{lessonId:guid}/hard")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> HardDelete(
+        Guid lessonId, CancellationToken ct)
+    {
+        await _lessonService.HardDeleteLessonAsync(lessonId, ct);
+        return Ok(ApiResponse<object>.Ok(null!, "Lesson permanently deleted."));
+    }
 }

@@ -65,4 +65,22 @@ public class TopicController : ControllerBase
         await _topicService.DeleteTopicAsync(topicId, ct);
         return Ok(ApiResponse<object>.Ok(null, "Topic deleted."));
     }
+
+    [HttpPatch("{topicId:guid}/restore")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> RestoreTopic(
+        Guid topicId, CancellationToken ct)
+    {
+        await _topicService.RestoreTopicAsync(topicId, ct);
+        return Ok(ApiResponse<object>.Ok(null!, "Topic restored."));
+    }
+
+    [HttpDelete("{topicId:guid}/hard")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> HardDeleteTopic(
+        Guid topicId, CancellationToken ct)
+    {
+        await _topicService.HardDeleteTopicAsync(topicId, ct);
+        return Ok(ApiResponse<object>.Ok(null!, "Topic permanently deleted."));
+    }
 }

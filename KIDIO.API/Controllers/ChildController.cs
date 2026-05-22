@@ -62,6 +62,23 @@ public class ChildController : ControllerBase
         return Ok(ApiResponse<object>.Ok(null, "Child profile deleted."));
     }
 
+    [HttpPatch("{childId:guid}/restore")]
+    public async Task<ActionResult<ApiResponse<object>>> RestoreChild(
+        Guid childId, CancellationToken ct)
+    {
+        await _childService.RestoreChildAsync(childId, GetCurrentUserId(), ct);
+        return Ok(ApiResponse<object>.Ok(null, "Child profile restored."));
+    }
+
+    [HttpDelete("{childId:guid}/hard")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> HardDeleteChild(
+        Guid childId, CancellationToken ct)
+    {
+        await _childService.HardDeleteChildAsync(childId, ct);
+        return Ok(ApiResponse<object>.Ok(null, "Child profile permanently deleted."));
+    }
+
     // ── Helper ──────────────────────────────────────────────
 
     private Guid GetCurrentUserId()

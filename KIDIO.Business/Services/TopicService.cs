@@ -127,6 +127,40 @@ public class TopicService : ITopicService
         await _uow.SaveChangesAsync(ct);
     }
 
+    public async Task RestoreTopicAsync(Guid topicId, CancellationToken ct = default)
+    {
+        var topic = await _uow.Topics.Query()
+            .IgnoreQueryFilters()
+            .Include(t => t.Lessons)
+            .FirstOrDefaultAsync(t => t.Id == topicId, ct)
+            ?? throw new NotFoundException("Topic");
+
+        if (!topic.IsDeleted)
+            throw new AppException("Topic is not deleted.");
+
+        topic.IsDeleted = false;
+        _uow.Topics.Update(topic);
+        await _uow.SaveChangesAsync(ct);
+    }
+
+    public async Task HardDeleteTopicAsync(Guid topicId, CancellationToken ct = default)
+    {
+        var topic = await _uow.Topics.Query()
+            .IgnoreQueryFilters()
+            .Include(t => t.Lessons)
+            .FirstOrDefaultAsync(t => t.Id == topicId, ct)
+            ?? throw new NotFoundException("Topic");
+
+        // Không cho xóa vĩnh viễn nếu còn lesson đã published
+        var hasPublished = topic.Lessons.Any(l => l.IsPublished && !l.IsDeleted);
+        if (hasPublished)
+            throw new AppException(
+                "Cannot permanently delete a topic that has published lessons. Unpublish or remove lessons first.");
+
+        _uow.Topics.Remove(topic);
+        await _uow.SaveChangesAsync(ct);
+    }
+
     private static TopicResponse MapToResponse(Topic t) => new(
         Id: t.Id,
         Name: t.Name,

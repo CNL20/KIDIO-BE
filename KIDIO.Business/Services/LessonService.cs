@@ -178,6 +178,38 @@ public class LessonService : ILessonService
         await _uow.SaveChangesAsync(ct);
     }
 
+    public async Task RestoreLessonAsync(Guid lessonId, CancellationToken ct = default)
+    {
+        var lesson = await _uow.Lessons.Query()
+            .IgnoreQueryFilters()
+            .Include(l => l.Vocabularies)
+            .FirstOrDefaultAsync(l => l.Id == lessonId, ct)
+            ?? throw new NotFoundException("Lesson");
+
+        if (!lesson.IsDeleted)
+            throw new AppException("Lesson is not deleted.");
+
+        lesson.IsDeleted = false;
+        _uow.Lessons.Update(lesson);
+        await _uow.SaveChangesAsync(ct);
+    }
+
+    public async Task HardDeleteLessonAsync(Guid lessonId, CancellationToken ct = default)
+    {
+        var lesson = await _uow.Lessons.Query()
+            .IgnoreQueryFilters()
+            .Include(l => l.Vocabularies)
+            .FirstOrDefaultAsync(l => l.Id == lessonId, ct)
+            ?? throw new NotFoundException("Lesson");
+
+        if (lesson.IsPublished)
+            throw new AppException("Cannot permanently delete a published lesson. Unpublish first.");
+
+        // Remove vocabularies explicitly (or rely on cascade) then remove lesson
+        _uow.Lessons.Remove(lesson);
+        await _uow.SaveChangesAsync(ct);
+    }
+
     // ── Helpers ─────────────────────────────────────────────
 
     private static T ParseEnum<T>(string value) where T : struct, Enum

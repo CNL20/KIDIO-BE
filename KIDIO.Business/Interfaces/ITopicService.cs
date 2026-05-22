@@ -9,4 +9,6 @@ public interface ITopicService
     Task<TopicResponse> CreateTopicAsync(CreateTopicRequest request, CancellationToken ct = default);
     Task<TopicResponse> UpdateTopicAsync(Guid topicId, UpdateTopicRequest request, CancellationToken ct = default);
     Task DeleteTopicAsync(Guid topicId, CancellationToken ct = default);
+    Task RestoreTopicAsync(Guid topicId, CancellationToken ct = default);
+    Task HardDeleteTopicAsync(Guid topicId, CancellationToken ct = default);
 }

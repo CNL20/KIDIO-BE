@@ -81,6 +81,14 @@ namespace KIDIO.Data.Entities
                 e.HasOne(p => p.Lesson).WithMany()
                  .HasForeignKey(p => p.LessonId).OnDelete(DeleteBehavior.SetNull);
             });
+
+            // Vocabulary
+            modelBuilder.Entity<Vocabulary>(e =>
+            {
+                e.HasIndex(v => new { v.LessonId, v.OrderIndex }).IsUnique();
+                e.Property(v => v.Word).HasMaxLength(200);
+                e.Property(v => v.Meaning).HasMaxLength(500);
+            });
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken ct = default)

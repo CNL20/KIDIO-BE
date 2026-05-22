@@ -9,4 +9,6 @@ public interface IChildService
     Task<ChildResponse> CreateChildAsync(Guid parentId, CreateChildRequest request, CancellationToken ct = default);
     Task<ChildResponse> UpdateChildAsync(Guid childId, Guid parentId, UpdateChildRequest request, CancellationToken ct = default);
     Task DeleteChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
+    Task RestoreChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
+    Task HardDeleteChildAsync(Guid childId, CancellationToken ct = default);
 }

@@ -3,6 +3,7 @@ using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
 using KIDIO.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace KIDIO.Business.Services;
 
@@ -89,6 +90,35 @@ public class ChildService : IChildService
         child.IsDeleted = true;
 
         _uow.Children.Update(child);
+        await _uow.SaveChangesAsync(ct);
+    }
+
+    public async Task RestoreChildAsync(Guid childId, Guid parentId, CancellationToken ct = default)
+    {
+        var child = await _uow.Children.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == childId, ct)
+            ?? throw new NotFoundException("Child");
+
+        if (child.ParentId != parentId)
+            throw new ForbiddenException("You do not have access to this child profile.");
+
+        if (!child.IsDeleted)
+            throw new AppException("Child profile is not deleted.");
+
+        child.IsDeleted = false;
+        _uow.Children.Update(child);
+        await _uow.SaveChangesAsync(ct);
+    }
+
+    public async Task HardDeleteChildAsync(Guid childId, CancellationToken ct = default)
+    {
+        var child = await _uow.Children.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == childId, ct)
+            ?? throw new NotFoundException("Child");
+
+        _uow.Children.Remove(child);
         await _uow.SaveChangesAsync(ct);
     }
 

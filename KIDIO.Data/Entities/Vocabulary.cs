@@ -11,6 +11,7 @@ namespace KIDIO.Data.Entities
     {
         public string Word { get; set; } = string.Empty;
         public string Meaning { get; set; } = string.Empty;
+        public int OrderIndex { get; set; }
         public string? PhoneticText { get; set; }
         public string? AudioUrl { get; set; }
         public string? ImageUrl { get; set; }

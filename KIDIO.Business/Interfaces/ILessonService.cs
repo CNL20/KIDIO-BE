@@ -12,4 +12,6 @@ public interface ILessonService
     Task DeleteLessonAsync(Guid lessonId, CancellationToken ct = default);
     Task PublishLessonAsync(Guid lessonId, CancellationToken ct = default);
     Task UnpublishLessonAsync(Guid lessonId, CancellationToken ct = default);
+    Task RestoreLessonAsync(Guid lessonId, CancellationToken ct = default);
+    Task HardDeleteLessonAsync(Guid lessonId, CancellationToken ct = default);
 }
