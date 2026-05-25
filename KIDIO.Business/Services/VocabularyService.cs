@@ -1,4 +1,5 @@
 ﻿using KIDIO.Business.DTOs.Vocabulary;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -16,7 +17,7 @@ public class VocabularyService : IVocabularyService
         _uow = uow;
     }
 
-    public async Task<PagedVocabularyResponse> GetPagedAsync(
+    public async Task<PagedResponse<VocabularyResponse>> GetPagedAsync(
         int page, int pageSize, Guid? lessonId = null, CancellationToken ct = default)
     {
         page = page < 1 ? 1 : page;
@@ -28,14 +29,9 @@ public class VocabularyService : IVocabularyService
         if (lessonId.HasValue)
             query = query.Where(v => v.LessonId == lessonId.Value);
 
-        var totalCount = await query.CountAsync(ct);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-        var items = await query
+        return await query
             .OrderBy(v => v.OrderIndex)
             .ThenBy(v => v.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
             .Select(v => new VocabularyResponse(
                 v.Id,
                 v.Word,
@@ -49,9 +45,93 @@ public class VocabularyService : IVocabularyService
                 v.Lesson.Title,
                 v.CreatedAt
             ))
-            .ToListAsync(ct);
+            .ToPagedResponseAsync(page, pageSize, ct);
+    }
 
-        return new PagedVocabularyResponse(items, page, pageSize, totalCount, totalPages);
+    public async Task<PagedResponse<VocabularyResponse>> GetAllPagedAsync(
+        int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        return await _uow.Vocabularies.Query()
+            .Include(v => v.Lesson)
+            .OrderBy(v => v.OrderIndex)
+            .ThenBy(v => v.CreatedAt)
+            .Select(v => new VocabularyResponse(
+                v.Id,
+                v.Word,
+                v.Meaning,
+                v.PhoneticText,
+                v.AudioUrl,
+                v.ImageUrl,
+                v.ExampleSentence,
+                v.OrderIndex,
+                v.LessonId,
+                v.Lesson.Title,
+                v.CreatedAt
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
+    }
+
+    public async Task<PagedResponse<VocabularyResponse>> SearchPagedAsync(
+        string keyword, Guid? lessonId = null, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var normalized = keyword.Trim().ToLower();
+
+        IQueryable<Vocabulary> query = _uow.Vocabularies.Query()
+            .Include(v => v.Lesson)
+            .Where(v =>
+                v.Word.ToLower().Contains(normalized) ||
+                v.Meaning.ToLower().Contains(normalized) ||
+                (v.PhoneticText ?? string.Empty).ToLower().Contains(normalized) ||
+                (v.ExampleSentence ?? string.Empty).ToLower().Contains(normalized) ||
+                v.Lesson.Title.ToLower().Contains(normalized));
+
+        if (lessonId.HasValue)
+            query = query.Where(v => v.LessonId == lessonId.Value);
+
+        return await query
+            .OrderBy(v => v.OrderIndex)
+            .ThenBy(v => v.CreatedAt)
+            .Select(v => new VocabularyResponse(
+                v.Id,
+                v.Word,
+                v.Meaning,
+                v.PhoneticText,
+                v.AudioUrl,
+                v.ImageUrl,
+                v.ExampleSentence,
+                v.OrderIndex,
+                v.LessonId,
+                v.Lesson.Title,
+                v.CreatedAt
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
+    }
+
+    public async Task<PagedResponse<VocabularyResponse>> GetByLessonPagedAsync(
+        Guid lessonId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        _ = await _uow.Lessons.GetByIdAsync(lessonId, ct)
+            ?? throw new NotFoundException("Lesson");
+
+        return await _uow.Vocabularies.Query()
+            .Include(v => v.Lesson)
+            .Where(v => v.LessonId == lessonId)
+            .OrderBy(v => v.OrderIndex)
+            .ThenBy(v => v.CreatedAt)
+            .Select(v => new VocabularyResponse(
+                v.Id,
+                v.Word,
+                v.Meaning,
+                v.PhoneticText,
+                v.AudioUrl,
+                v.ImageUrl,
+                v.ExampleSentence,
+                v.OrderIndex,
+                v.LessonId,
+                v.Lesson.Title,
+                v.CreatedAt
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<List<VocabularyResponse>> GetAllAsync(CancellationToken ct = default)

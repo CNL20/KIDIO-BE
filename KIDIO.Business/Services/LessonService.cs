@@ -1,4 +1,5 @@
 ﻿using KIDIO.Business.DTOs.Lesson;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Common.Enums;
@@ -41,6 +42,30 @@ public class LessonService : ILessonService
             .ToListAsync(ct);
     }
 
+    public async Task<PagedResponse<LessonSummaryResponse>> GetAllLessonsPagedAsync(
+        bool includeUnpublished = false, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var query = _uow.Lessons.Query();
+
+        if (!includeUnpublished)
+            query = query.Where(l => l.IsPublished);
+
+        return await query
+            .OrderBy(l => l.OrderIndex)
+            .Select(l => new LessonSummaryResponse(
+                l.Id,
+                l.Title,
+                l.Type.ToString(),
+                l.Difficulty.ToString(),
+                l.SkillFocus.ToString(),
+                l.DurationSeconds,
+                l.ThumbnailUrl,
+                l.OrderIndex,
+                l.IsPublished
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
+    }
+
     public async Task<List<LessonSummaryResponse>> GetLessonsByTopicAsync(
         Guid topicId, bool includeUnpublished = false, CancellationToken ct = default)
     {
@@ -67,6 +92,34 @@ public class LessonService : ILessonService
                 l.IsPublished
             ))
             .ToListAsync(ct);
+    }
+
+    public async Task<PagedResponse<LessonSummaryResponse>> GetLessonsByTopicPagedAsync(
+        Guid topicId, bool includeUnpublished = false, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        _ = await _uow.Topics.GetByIdAsync(topicId, ct)
+            ?? throw new NotFoundException("Topic");
+
+        var query = _uow.Lessons.Query()
+            .Where(l => l.TopicId == topicId);
+
+        if (!includeUnpublished)
+            query = query.Where(l => l.IsPublished);
+
+        return await query
+            .OrderBy(l => l.OrderIndex)
+            .Select(l => new LessonSummaryResponse(
+                l.Id,
+                l.Title,
+                l.Type.ToString(),
+                l.Difficulty.ToString(),
+                l.SkillFocus.ToString(),
+                l.DurationSeconds,
+                l.ThumbnailUrl,
+                l.OrderIndex,
+                l.IsPublished
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<LessonResponse> GetLessonByIdAsync(

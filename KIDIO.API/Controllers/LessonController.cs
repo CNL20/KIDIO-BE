@@ -20,22 +20,27 @@ public class LessonController : ControllerBase
     // Public
     [HttpGet("all")]
     [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<LessonSummaryResponse>>>> GetAllLessons(
-        CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<LessonSummaryResponse>>>> GetAllLessons(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
         var includeUnpublished = User.IsInRole("Admin");
-        var result = await _lessonService.GetAllLessonsAsync(includeUnpublished, ct);
-        return Ok(ApiResponse<List<LessonSummaryResponse>>.Ok(result));
+        var result = await _lessonService.GetAllLessonsPagedAsync(includeUnpublished, pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<LessonSummaryResponse>>.Ok(result));
     }
 
     [HttpGet("topic/{topicId:guid}")]
     [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<LessonSummaryResponse>>>> GetLessonsByTopic(
-        Guid topicId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<LessonSummaryResponse>>>> GetLessonsByTopic(
+        Guid topicId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
         var includeUnpublished = User.IsInRole("Admin");
-        var result = await _lessonService.GetLessonsByTopicAsync(topicId, includeUnpublished, ct);
-        return Ok(ApiResponse<List<LessonSummaryResponse>>.Ok(result));
+        var result = await _lessonService.GetLessonsByTopicPagedAsync(topicId, includeUnpublished, pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<LessonSummaryResponse>>.Ok(result));
     }
 
     [HttpGet("{lessonId:guid}")]

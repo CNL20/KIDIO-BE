@@ -1,4 +1,5 @@
 ﻿using KIDIO.Business.DTOs.Lesson;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -31,6 +32,23 @@ public class TopicService : ITopicService
             .ToListAsync(ct);
 
         return topics;
+    }
+
+    public async Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(
+        int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var query = _uow.Topics.Query()
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.OrderIndex)
+            .Select(t => new TopicSummaryResponse(
+                t.Id,
+                t.Name,
+                t.IconUrl,
+                t.OrderIndex,
+                t.Lessons.Count(l => l.IsPublished && !l.IsDeleted)
+            ));
+
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<TopicResponse> GetTopicByIdAsync(Guid topicId, CancellationToken ct = default)

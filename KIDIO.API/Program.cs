@@ -63,6 +63,9 @@ builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<ITextToSpeechService, TextToSpeechService>();
 builder.Services.AddScoped<ITextToSpeechAudioStorage, LocalTextToSpeechAudioStorage>();
+builder.Services.AddScoped<IPronunciationScoringService, PronunciationScoringService>();
+builder.Services.AddScoped<IPronunciationAudioStorage, LocalPronunciationAudioStorage>();
+builder.Services.AddScoped<IParentDashboardService, ParentDashboardService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================

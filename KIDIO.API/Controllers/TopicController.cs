@@ -20,11 +20,13 @@ public class TopicController : ControllerBase
     // Public — child/parent đều xem được
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<TopicSummaryResponse>>>> GetTopics(
-        CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<TopicSummaryResponse>>>> GetTopics(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _topicService.GetAllTopicsAsync(ct);
-        return Ok(ApiResponse<List<TopicSummaryResponse>>.Ok(result));
+        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 
     [HttpGet("{topicId:guid}")]

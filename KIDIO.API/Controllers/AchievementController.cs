@@ -23,13 +23,16 @@ public class AchievementController : ControllerBase
     /// Lấy tất cả huy hiệu của child — dùng cho trang profile
     /// </summary>
     [HttpGet("child/{childId:guid}")]
-    public async Task<ActionResult<ApiResponse<List<AchievementResponse>>>> GetByChild(
-        Guid childId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<AchievementResponse>>>> GetByChild(
+        Guid childId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _achievementService.GetByChildAsync(
-            childId, GetCurrentUserId(), ct);
+        var result = await _achievementService.GetByChildPagedAsync(
+            childId, GetCurrentUserId(), pageNumber, pageSize, ct);
 
-        return Ok(ApiResponse<List<AchievementResponse>>.Ok(result));
+        return Ok(ApiResponse<PagedResponse<AchievementResponse>>.Ok(result));
     }
 
     /// <summary>
@@ -37,10 +40,13 @@ public class AchievementController : ControllerBase
     /// </summary>
     [HttpGet("definitions")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<ApiResponse<List<AchievementDefinitionResponse>>>> GetAllDefinitions(CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<AchievementDefinitionResponse>>>> GetAllDefinitions(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _achievementService.GetAllDefinitionsAsync(ct);
-        return Ok(ApiResponse<List<AchievementDefinitionResponse>>.Ok(result));
+        var result = await _achievementService.GetAllDefinitionsPagedAsync(pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<AchievementDefinitionResponse>>.Ok(result));
     }
 
     /// <summary>

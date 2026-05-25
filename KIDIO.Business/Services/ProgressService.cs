@@ -1,5 +1,6 @@
 ﻿using KIDIO.Business.DTOs.Achievement;
 using KIDIO.Business.DTOs.Progress;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -95,19 +96,32 @@ public class ProgressService : IProgressService
         return await BuildProgressResponseAsync(existing, achievementResult.NewAchievements, ct);
     }
 
-    public async Task<List<ProgressResponse>> GetProgressByChildAsync(
-        Guid childId, Guid parentId, CancellationToken ct = default)
+    public async Task<PagedResponse<ProgressResponse>> GetProgressByChildAsync(
+        Guid childId, Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
     {
         await VerifyChildOwnershipAsync(childId, parentId, ct);
 
-        var progresses = await _uow.LessonProgresses.Query()
+        var query = _uow.LessonProgresses.Query()
             .Include(p => p.Child)
             .Include(p => p.Lesson)
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
-            .ToListAsync(ct);
+            .Select(p => new ProgressResponse(
+                p.Id,
+                p.ChildId,
+                p.Child.Name,
+                p.LessonId,
+                p.Lesson.Title,
+                p.IsCompleted,
+                p.StarsEarned,
+                p.ScorePercent,
+                p.TimeSpentSeconds,
+                p.AttemptCount,
+                p.CompletedAt,
+                p.CreatedAt,
+                new List<AchievementResponse>())) ;
 
-        return progresses.Select(p => MapToResponse(p)).ToList();
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<ProgressResponse?> GetLessonProgressAsync(
@@ -169,37 +183,60 @@ public class ProgressService : IProgressService
         );
     }
 
-    public async Task<List<ProgressResponse>> GetRecentActivitiesAsync(
-        Guid childId, Guid parentId, int count = 5, CancellationToken ct = default)
+    public async Task<PagedResponse<ProgressResponse>> GetRecentActivitiesAsync(
+        Guid childId, Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
     {
         await VerifyChildOwnershipAsync(childId, parentId, ct);
 
-        var safeCount = count <= 0 ? 5 : Math.Min(count, 50);
-
-        var progresses = await _uow.LessonProgresses.Query()
+        var query = _uow.LessonProgresses.Query()
             .Include(p => p.Child)
             .Include(p => p.Lesson)
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.UpdatedAt ?? p.CompletedAt ?? p.CreatedAt)
-            .Take(safeCount)
-            .ToListAsync(ct);
+            .Select(p => new ProgressResponse(
+                p.Id,
+                p.ChildId,
+                p.Child.Name,
+                p.LessonId,
+                p.Lesson.Title,
+                p.IsCompleted,
+                p.StarsEarned,
+                p.ScorePercent,
+                p.TimeSpentSeconds,
+                p.AttemptCount,
+                p.CompletedAt,
+                p.CreatedAt,
+                new List<AchievementResponse>())) ;
 
-        return progresses.Select(p => MapToResponse(p)).ToList();
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
-    public async Task<List<ProgressResponse>> GetCompletedLessonsAsync(
-        Guid childId, Guid parentId, CancellationToken ct = default)
+    public async Task<PagedResponse<ProgressResponse>> GetCompletedLessonsAsync(
+        Guid childId, Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
     {
         await VerifyChildOwnershipAsync(childId, parentId, ct);
 
-        var progresses = await _uow.LessonProgresses.Query()
+        var query = _uow.LessonProgresses.Query()
             .Include(p => p.Child)
             .Include(p => p.Lesson)
             .Where(p => p.ChildId == childId && p.IsCompleted)
             .OrderByDescending(p => p.CompletedAt ?? p.UpdatedAt ?? p.CreatedAt)
-            .ToListAsync(ct);
+            .Select(p => new ProgressResponse(
+                p.Id,
+                p.ChildId,
+                p.Child.Name,
+                p.LessonId,
+                p.Lesson.Title,
+                p.IsCompleted,
+                p.StarsEarned,
+                p.ScorePercent,
+                p.TimeSpentSeconds,
+                p.AttemptCount,
+                p.CompletedAt,
+                p.CreatedAt,
+                new List<AchievementResponse>())) ;
 
-        return progresses.Select(p => MapToResponse(p)).ToList();
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     // ── Helpers ─────────────────────────────────────────────

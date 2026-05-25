@@ -36,13 +36,16 @@ public class ProgressController : ControllerBase
     /// Lấy toàn bộ lịch sử học của 1 child
     /// </summary>
     [HttpGet("child/{childId:guid}")]
-    public async Task<ActionResult<ApiResponse<List<ProgressResponse>>>> GetByChild(
-        Guid childId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<ProgressResponse>>>> GetByChild(
+        Guid childId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
         var result = await _progressService.GetProgressByChildAsync(
-            childId, GetCurrentUserId(), ct);
+            childId, GetCurrentUserId(), pageNumber, pageSize, ct);
 
-        return Ok(ApiResponse<List<ProgressResponse>>.Ok(result));
+        return Ok(ApiResponse<PagedResponse<ProgressResponse>>.Ok(result));
     }
 
     /// <summary>
@@ -75,28 +78,32 @@ public class ProgressController : ControllerBase
     /// Lấy các hoạt động học gần đây của child
     /// </summary>
     [HttpGet("child/{childId:guid}/recent-activities")]
-    public async Task<ActionResult<ApiResponse<List<ProgressResponse>>>> GetRecentActivities(
+    public async Task<ActionResult<ApiResponse<PagedResponse<ProgressResponse>>>> GetRecentActivities(
         Guid childId,
-        [FromQuery] int count = 5,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await _progressService.GetRecentActivitiesAsync(
-            childId, GetCurrentUserId(), count, ct);
+            childId, GetCurrentUserId(), pageNumber, pageSize, ct);
 
-        return Ok(ApiResponse<List<ProgressResponse>>.Ok(result));
+        return Ok(ApiResponse<PagedResponse<ProgressResponse>>.Ok(result));
     }
 
     /// <summary>
     /// Lấy danh sách lesson đã hoàn thành của child
     /// </summary>
     [HttpGet("child/{childId:guid}/completed-lessons")]
-    public async Task<ActionResult<ApiResponse<List<ProgressResponse>>>> GetCompletedLessons(
-        Guid childId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<ProgressResponse>>>> GetCompletedLessons(
+        Guid childId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
         var result = await _progressService.GetCompletedLessonsAsync(
-            childId, GetCurrentUserId(), ct);
+            childId, GetCurrentUserId(), pageNumber, pageSize, ct);
 
-        return Ok(ApiResponse<List<ProgressResponse>>.Ok(result));
+        return Ok(ApiResponse<PagedResponse<ProgressResponse>>.Ok(result));
     }
 
     // ── Helper ──────────────────────────────────────────────

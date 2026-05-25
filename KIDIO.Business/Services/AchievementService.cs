@@ -1,4 +1,5 @@
 ﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -38,6 +39,31 @@ public class AchievementService : IAchievementService
                 a.EarnedAt
             ))
             .ToListAsync(ct);
+    }
+
+    public async Task<PagedResponse<AchievementResponse>> GetByChildPagedAsync(
+        Guid childId, Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var child = await _uow.Children.GetByIdAsync(childId, ct)
+            ?? throw new NotFoundException("Child");
+
+        if (child.ParentId != parentId)
+            throw new ForbiddenException("You do not have access to this child profile.");
+
+        var query = _uow.Achievements.Query()
+            .Where(a => a.ChildId == childId)
+            .OrderByDescending(a => a.EarnedAt)
+            .Select(a => new AchievementResponse(
+                a.Id,
+                a.Name,
+                a.Description,
+                a.BadgeUrl,
+                a.AchievementType,
+                a.Threshold,
+                a.EarnedAt
+            ));
+
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<AchievementUnlockResult> CheckAndUnlockAsync(
@@ -139,6 +165,25 @@ public class AchievementService : IAchievementService
                 d.IsActive
             ))
             .ToListAsync(ct);
+    }
+
+    public async Task<PagedResponse<AchievementDefinitionResponse>> GetAllDefinitionsPagedAsync(
+        int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var query = _uow.AchievementDefinitions.Query()
+            .OrderBy(d => d.OrderIndex)
+            .Select(d => new AchievementDefinitionResponse(
+                d.Id,
+                d.Type,
+                d.Threshold,
+                d.Name,
+                d.Description,
+                d.BadgeUrl,
+                d.OrderIndex,
+                d.IsActive
+            ));
+
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<AchievementDefinitionResponse?> GetDefinitionByIdAsync(Guid id, CancellationToken ct = default)

@@ -20,11 +20,13 @@ public class ChildController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<ChildSummaryResponse>>>> GetChildren(
-        CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<ChildSummaryResponse>>>> GetChildren(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _childService.GetChildrenByParentAsync(GetCurrentUserId(), ct);
-        return Ok(ApiResponse<List<ChildSummaryResponse>>.Ok(result));
+        var result = await _childService.GetChildrenByParentPagedAsync(GetCurrentUserId(), pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<ChildSummaryResponse>>.Ok(result));
     }
 
     [HttpGet("{childId:guid}")]
@@ -59,7 +61,7 @@ public class ChildController : ControllerBase
         Guid childId, CancellationToken ct)
     {
         await _childService.DeleteChildAsync(childId, GetCurrentUserId(), ct);
-        return Ok(ApiResponse<object>.Ok(null, "Child profile deleted."));
+        return Ok(ApiResponse<object>.Ok(null!, "Child profile deleted."));
     }
 
     [HttpPatch("{childId:guid}/restore")]

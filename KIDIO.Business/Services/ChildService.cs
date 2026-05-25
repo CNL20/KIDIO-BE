@@ -1,4 +1,5 @@
 ﻿using KIDIO.Business.DTOs.Child;
+using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
@@ -27,6 +28,24 @@ public class ChildService : IChildService
             .OrderBy(c => c.CreatedAt)
             .Select(MapToSummary)
             .ToList();
+    }
+
+    public async Task<PagedResponse<ChildSummaryResponse>> GetChildrenByParentPagedAsync(
+        Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    {
+        var query = _uow.Children.Query()
+            .Where(c => c.ParentId == parentId)
+            .OrderBy(c => c.CreatedAt)
+            .Select(c => new ChildSummaryResponse(
+                c.Id,
+                c.Name,
+                c.Age,
+                c.AvatarUrl,
+                c.TotalStars,
+                c.CurrentStreakDays
+            ));
+
+        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<ChildResponse> GetChildByIdAsync(

@@ -19,43 +19,50 @@ public class VocabularyController : ControllerBase
 
     [HttpGet("paged")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<ApiResponse<PagedVocabularyResponse>>> GetPaged(
+    public async Task<ActionResult<ApiResponse<PagedResponse<VocabularyResponse>>>> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] Guid? lessonId = null,
         CancellationToken ct = default)
     {
         var result = await _vocabService.GetPagedAsync(page, pageSize, lessonId, ct);
-        return Ok(ApiResponse<PagedVocabularyResponse>.Ok(result));
+        return Ok(ApiResponse<PagedResponse<VocabularyResponse>>.Ok(result));
     }
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<ApiResponse<List<VocabularyResponse>>>> GetAll(
-        CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<VocabularyResponse>>>> GetAll(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _vocabService.GetAllAsync(ct);
-        return Ok(ApiResponse<List<VocabularyResponse>>.Ok(result));
+        var result = await _vocabService.GetAllPagedAsync(pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<VocabularyResponse>>.Ok(result));
     }
 
     [HttpGet("search")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<ApiResponse<List<VocabularyResponse>>>> Search(
+    public async Task<ActionResult<ApiResponse<PagedResponse<VocabularyResponse>>>> Search(
         [FromQuery] string keyword,
         [FromQuery] Guid? lessonId,
-        CancellationToken ct)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _vocabService.SearchAsync(keyword, lessonId, ct);
-        return Ok(ApiResponse<List<VocabularyResponse>>.Ok(result));
+        var result = await _vocabService.SearchPagedAsync(keyword, lessonId, pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<VocabularyResponse>>.Ok(result));
     }
 
     [HttpGet("lesson/{lessonId:guid}")]
     [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<VocabularyResponse>>>> GetByLesson(
-        Guid lessonId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResponse<VocabularyResponse>>>> GetByLesson(
+        Guid lessonId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _vocabService.GetByLessonAsync(lessonId, ct);
-        return Ok(ApiResponse<List<VocabularyResponse>>.Ok(result));
+        var result = await _vocabService.GetByLessonPagedAsync(lessonId, pageNumber, pageSize, ct);
+        return Ok(ApiResponse<PagedResponse<VocabularyResponse>>.Ok(result));
     }
 
     [HttpGet("{vocabId:guid}")]

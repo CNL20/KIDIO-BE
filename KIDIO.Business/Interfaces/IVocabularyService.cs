@@ -1,10 +1,14 @@
-﻿using KIDIO.Business.DTOs.Vocabulary;
+﻿using KIDIO.Common;
+using KIDIO.Business.DTOs.Vocabulary;
 
 namespace KIDIO.Business.Interfaces;
 
 public interface IVocabularyService
 {
-    Task<PagedVocabularyResponse> GetPagedAsync(int page, int pageSize, Guid? lessonId = null, CancellationToken ct = default);
+    Task<PagedResponse<VocabularyResponse>> GetPagedAsync(int page, int pageSize, Guid? lessonId = null, CancellationToken ct = default);
+    Task<PagedResponse<VocabularyResponse>> GetAllPagedAsync(int pageNumber = 1, int pageSize = 10, CancellationToken ct = default);
+    Task<PagedResponse<VocabularyResponse>> SearchPagedAsync(string keyword, Guid? lessonId = null, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default);
+    Task<PagedResponse<VocabularyResponse>> GetByLessonPagedAsync(Guid lessonId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default);
     Task<List<VocabularyResponse>> GetAllAsync(CancellationToken ct = default);
     Task<List<VocabularyResponse>> SearchAsync(string keyword, Guid? lessonId = null, CancellationToken ct = default);
     Task<List<VocabularyResponse>> GetByLessonAsync(Guid lessonId, CancellationToken ct = default);
