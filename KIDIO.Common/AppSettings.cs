@@ -34,6 +34,12 @@ namespace KIDIO.Common
         public string AzureSpeechRegion { get; set; } = string.Empty;
     }
 
+    public class AzureSpeechSettings
+    {
+        public string AzureSpeechKey { get; set; } = string.Empty;
+        public string AzureSpeechRegion { get; set; } = string.Empty;
+    }
+
     public class AdminSettings
     {
         public List<string> Emails { get; set; } = new();

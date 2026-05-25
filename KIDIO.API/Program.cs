@@ -1,10 +1,12 @@
 ﻿using KIDIO.API.Middleware;
+using KIDIO.API.Services;
 using KIDIO.Business.Interfaces;
 using KIDIO.Business.Services;
 using KIDIO.Common;
 using KIDIO.Data;
 using KIDIO.Data.Entities;
 using KIDIO.Data.Repositories;
+using KIDIO.Data.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +31,8 @@ builder.Services.Configure<AdminSettings>(
     builder.Configuration.GetSection("AdminSettings"));
 builder.Services.Configure<FacebookOAuthSettings>(
     builder.Configuration.GetSection("FacebookOAuth"));
+builder.Services.Configure<AzureSpeechSettings>(
+    builder.Configuration.GetSection("AzureSpeech"));
 builder.Services.Configure<AISettings>(
     builder.Configuration.GetSection("AISettings"));
 
@@ -57,6 +61,8 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IVocabularyService, VocabularyService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<ITextToSpeechService, TextToSpeechService>();
+builder.Services.AddScoped<ITextToSpeechAudioStorage, LocalTextToSpeechAudioStorage>();
 // =========================
 // JWT AUTHENTICATION
 // =========================
@@ -169,12 +175,17 @@ app.UseMiddleware<ExceptionMiddleware>();
 // 2. HTTPS redirect
 app.UseHttpsRedirection();
 
+// Serve cached/generated TTS audio
+app.UseStaticFiles();
+
 // 3. Dev tools
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<KidioDbContext>();
     await db.Database.MigrateAsync();
+    // Seed demo data (topics, lessons, vocabularies)
+    await SeedData.EnsureSeedDataAsync(db);
 
     app.UseSwagger();
     app.UseSwaggerUI();
