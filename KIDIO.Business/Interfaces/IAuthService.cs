@@ -14,5 +14,6 @@ namespace KIDIO.Business.Interfaces
         Task<AuthResponse> GoogleLoginAsync(string idToken, CancellationToken ct = default);
         Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
         Task RevokeTokenAsync(Guid userId, CancellationToken ct = default);
+        Task<bool> VerifyEmailAsync(string token, CancellationToken ct = default);
     }
 }

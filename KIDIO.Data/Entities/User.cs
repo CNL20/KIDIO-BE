@@ -24,6 +24,11 @@ namespace KIDIO.Data.Entities
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
 
+        // Email Verification
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationTokenExpiryTime { get; set; }
+        public bool IsEmailConfirmed { get; set; } = false;
+
         // Navigation
         public ICollection<Child> Children { get; set; } = new List<Child>();
     }

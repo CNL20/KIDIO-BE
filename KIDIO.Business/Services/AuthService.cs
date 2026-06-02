@@ -26,17 +26,20 @@ namespace KIDIO.Business.Services
         private readonly JwtSettings _jwt;
         private readonly GoogleOAuthSettings _google;
         private readonly AdminSettings _admin;
+        private readonly IEmailService _emailService;
 
         public AuthService(
-        IUnitOfWork uow,
-        IOptions<JwtSettings> jwt,
-        IOptions<GoogleOAuthSettings> google,
-        IOptions<AdminSettings> admin)
+         IUnitOfWork uow,
+         IOptions<JwtSettings> jwt,
+         IOptions<GoogleOAuthSettings> google,
+         IOptions<AdminSettings> admin,
+         IEmailService emailService) 
         {
             _uow = uow;
             _jwt = jwt.Value;
             _google = google.Value;
             _admin = admin.Value;
+            _emailService = emailService; 
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -60,6 +63,8 @@ namespace KIDIO.Business.Services
             // Lưu ý: Đảm bảo thực thể 'User' của bạn có thuộc tính 'PasswordHash' (hoặc tương tự)
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
+            var verificationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                .Replace("=", "").Replace("+", "").Replace("/", "");
             // 4. Tạo đối tượng User mới
             var newUser = new User
             {
@@ -69,18 +74,26 @@ namespace KIDIO.Business.Services
                 PasswordHash = passwordHash, // Gán mật khẩu đã mã hóa
                 Role = UserRole.Parent,      // Định nghĩa role mặc định phù hợp với dự án KIDIO (ví dụ: Phụ huynh)
                 AvatarUrl = null,            // Tài khoản mới tạo chưa có avatar
-                GoogleId = null
+                GoogleId = null,
+
+                IsEmailConfirmed = false, // Chưa kích hoạt
+                EmailVerificationToken = verificationToken,
+                EmailVerificationTokenExpiryTime = DateTime.UtcNow.AddHours(24)
             };
 
             // 5. Lưu vào Database qua Unit of Work
             await _uow.Users.AddAsync(newUser, ct);
             await _uow.SaveChangesAsync(ct);
 
+            var confirmationLink = $"https://localhost:7014/api/auth/verify-email?token={verificationToken}";
+            var emailBody = $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+
+            await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
             // 6. Trả về thông báo thành công để FE chuyển hướng sang trang Login
             return new RegisterResponse(
                 Id: newUser.Id,
                 Email: newUser.Email,
-                Message: "Account registration successful! Please use your new account to log in."
+                Message: "Account registration successful! Please check your email to verify your account before logging in."
             );
         }
 
@@ -95,6 +108,11 @@ namespace KIDIO.Business.Services
             if (!isValidPassword)
             {
                 throw new UnauthorizedException("Incorrect email or password.");
+            }
+
+            if (!user.IsEmailConfirmed)
+            {
+                throw new UnauthorizedException("Your account has not been verified via email yet.");
             }
 
             // Cấp Token giống hệt bên GoogleLogin
@@ -256,6 +274,29 @@ namespace KIDIO.Business.Services
                     Role: user.Role.ToString()
                 )
             );
+        }
+
+        public async Task<bool> VerifyEmailAsync(string token, CancellationToken ct = default)
+        {
+            // Tìm user sở hữu token này
+            var user = await _uow.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token, ct)
+                       ?? throw new AppException("Invalid or used verification token.");
+
+            // Kiểm tra thời hạn token
+            if (user.EmailVerificationTokenExpiryTime < DateTime.UtcNow)
+            {
+                throw new AppException("Verification token has expired.");
+            }
+
+            // Xác thực thành công -> Clear sạch token đi
+            user.IsEmailConfirmed = true;
+            user.EmailVerificationToken = null;
+            user.EmailVerificationTokenExpiryTime = null;
+
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+
+            return true;
         }
     }
 }

@@ -41,6 +41,18 @@ namespace KIDIO.API.Controllers
         }
 
         /// <summary>
+        /// Xác thực tài khoản khi người dùng click vào link từ Email
+        /// </summary>
+        [HttpGet("verify-email")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<string>>> VerifyEmail(
+            [FromQuery] string token, CancellationToken ct)
+        {
+            await _authService.VerifyEmailAsync(token, ct);
+            return Ok(ApiResponse<string>.Ok("Email verified successfully! You can now log in."));
+        }
+
+        /// <summary>
         /// Đăng nhập bằng Google ID token (từ Google Sign-In SDK phía client)
         /// </summary>
         [HttpPost("google")]

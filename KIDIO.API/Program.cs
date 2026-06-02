@@ -66,6 +66,7 @@ builder.Services.AddScoped<ITextToSpeechAudioStorage, LocalTextToSpeechAudioStor
 builder.Services.AddScoped<IPronunciationScoringService, PronunciationScoringService>();
 builder.Services.AddScoped<IPronunciationAudioStorage, LocalPronunciationAudioStorage>();
 builder.Services.AddScoped<IParentDashboardService, ParentDashboardService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================
