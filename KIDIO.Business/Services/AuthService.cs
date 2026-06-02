@@ -103,6 +103,11 @@ namespace KIDIO.Business.Services
             var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower(), ct)
                        ?? throw new UnauthorizedException("Incorrect email or password.");
 
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                throw new UnauthorizedException("This account was created using Google Sign-In. Please sign in with Google.");
+            }
+
             // Kiểm tra mật khẩu (Sử dụng BCrypt để verify mật khẩu thô và mật khẩu đã băm trong DB)
             bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
             if (!isValidPassword)
