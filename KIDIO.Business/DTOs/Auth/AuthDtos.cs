@@ -11,8 +11,19 @@ namespace KIDIO.Business.DTOs.Auth
         //Request
         public record GoogleLoginRequest(string IdToken);
         public record RefreshTokenRequest(string RefreshToken);
-
+        public record LoginRequest(string Email, string Password);
+        public record RegisterRequest(
+            string Email,
+            string Password,
+            string ConfirmPassword, 
+            string DisplayName
+        );
         //Response
+        public record RegisterResponse(
+            Guid Id,
+            string Email,
+            string Message 
+        );
         public record AuthResponse(
             string AccessToken,
             string RefreshToken,

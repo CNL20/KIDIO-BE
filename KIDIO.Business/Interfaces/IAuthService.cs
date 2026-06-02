@@ -9,6 +9,8 @@ namespace KIDIO.Business.Interfaces
 {
     public interface IAuthService
     {
+        Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
+        Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default);
         Task<AuthResponse> GoogleLoginAsync(string idToken, CancellationToken ct = default);
         Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
         Task RevokeTokenAsync(Guid userId, CancellationToken ct = default);

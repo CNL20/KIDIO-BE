@@ -38,6 +38,77 @@ namespace KIDIO.Business.Services
             _google = google.Value;
             _admin = admin.Value;
         }
+
+        public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
+        {
+            // 1. Kiểm tra mật khẩu nhập lại có khớp hay không
+            if (!string.Equals(request.Password, request.ConfirmPassword))
+            {
+                throw new AppException("The re-entered password does not match.");
+            }
+
+            // 2. Kiểm tra Email này đã tồn tại trong hệ thống chưa
+            var existingUser = await _uow.Users.FirstOrDefaultAsync(
+                u => u.Email.ToLower() == request.Email.ToLower(), ct);
+
+            if (existingUser is not null)
+            {
+                throw new AppException("This email address has already been used.");
+            }
+
+            // 3. Mã hóa mật khẩu (Sử dụng BCrypt để băm mật khẩu bảo mật)
+            // Lưu ý: Đảm bảo thực thể 'User' của bạn có thuộc tính 'PasswordHash' (hoặc tương tự)
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            // 4. Tạo đối tượng User mới
+            var newUser = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = request.Email,
+                DisplayName = request.DisplayName,
+                PasswordHash = passwordHash, // Gán mật khẩu đã mã hóa
+                Role = UserRole.Parent,      // Định nghĩa role mặc định phù hợp với dự án KIDIO (ví dụ: Phụ huynh)
+                AvatarUrl = null,            // Tài khoản mới tạo chưa có avatar
+                GoogleId = null
+            };
+
+            // 5. Lưu vào Database qua Unit of Work
+            await _uow.Users.AddAsync(newUser, ct);
+            await _uow.SaveChangesAsync(ct);
+
+            // 6. Trả về thông báo thành công để FE chuyển hướng sang trang Login
+            return new RegisterResponse(
+                Id: newUser.Id,
+                Email: newUser.Email,
+                Message: "Account registration successful! Please use your new account to log in."
+            );
+        }
+
+        public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
+        {
+            // Tìm user theo email
+            var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower(), ct)
+                       ?? throw new UnauthorizedException("Incorrect email or password.");
+
+            // Kiểm tra mật khẩu (Sử dụng BCrypt để verify mật khẩu thô và mật khẩu đã băm trong DB)
+            bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!isValidPassword)
+            {
+                throw new UnauthorizedException("Incorrect email or password.");
+            }
+
+            // Cấp Token giống hệt bên GoogleLogin
+            var (accessToken, expiry) = GenerateAccessToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpiryDays);
+
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+
+            return BuildAuthResponse(accessToken, expiry, refreshToken, user);
+        }
         public async Task<AuthResponse> GoogleLoginAsync(string idToken, CancellationToken ct = default)
         {
             // 1. Verify Google ID token
@@ -186,6 +257,5 @@ namespace KIDIO.Business.Services
                 )
             );
         }
-
     }
 }

@@ -20,6 +20,27 @@ namespace KIDIO.API.Controllers
         }
 
         /// <summary>
+        /// Đăng ký tài khoản mới bằng Email và Mật khẩu
+        /// </summary>
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register(
+            [FromBody] RegisterRequest request, CancellationToken ct)
+        {
+            var result = await _authService.RegisterAsync(request, ct);
+            return Ok(ApiResponse<RegisterResponse>.Ok(result, result.Message));
+        }
+
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Login(
+            [FromBody] LoginRequest request, CancellationToken ct)
+        {
+            var result = await _authService.LoginAsync(request, ct);
+            return Ok(ApiResponse<AuthResponse>.Ok(result, "Login successful."));
+        }
+
+        /// <summary>
         /// Đăng nhập bằng Google ID token (từ Google Sign-In SDK phía client)
         /// </summary>
         [HttpPost("google")]
