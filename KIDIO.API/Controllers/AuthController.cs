@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static KIDIO.Business.DTOs.Auth.AuthDtos;
 using System.Security.Claims;
+using FluentValidation; // Thêm thư viện FluentValidation
 
 namespace KIDIO.API.Controllers
 {
@@ -14,9 +15,28 @@ namespace KIDIO.API.Controllers
     {
         private readonly IAuthService _authService;
 
-        public AuthController(IAuthService authService)
+        // Khai báo các Validator cho từng loại Request
+        private readonly IValidator<RegisterRequest> _registerValidator;
+        private readonly IValidator<LoginRequest> _loginValidator;
+        private readonly IValidator<ResendVerificationRequest> _resendValidator;
+        private readonly IValidator<GoogleLoginRequest> _googleLoginValidator;
+        private readonly IValidator<RefreshTokenRequest> _refreshValidator;
+
+        // Inject tất cả Validator qua Constructor
+        public AuthController(
+            IAuthService authService,
+            IValidator<RegisterRequest> registerValidator,
+            IValidator<LoginRequest> loginValidator,
+            IValidator<ResendVerificationRequest> resendValidator,
+            IValidator<GoogleLoginRequest> googleLoginValidator,
+            IValidator<RefreshTokenRequest> refreshValidator)
         {
             _authService = authService;
+            _registerValidator = registerValidator;
+            _loginValidator = loginValidator;
+            _resendValidator = resendValidator;
+            _googleLoginValidator = googleLoginValidator;
+            _refreshValidator = refreshValidator;
         }
 
         /// <summary>
@@ -27,6 +47,14 @@ namespace KIDIO.API.Controllers
         public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register(
             [FromBody] RegisterRequest request, CancellationToken ct)
         {
+            // Thực hiện Validate dữ liệu đầu vào
+            var validationResult = await _registerValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Dữ liệu đăng ký không hợp lệ.");
+            }
+
             var result = await _authService.RegisterAsync(request, ct);
             return Ok(ApiResponse<RegisterResponse>.Ok(result, result.Message));
         }
@@ -36,6 +64,14 @@ namespace KIDIO.API.Controllers
         public async Task<ActionResult<ApiResponse<AuthResponse>>> Login(
             [FromBody] LoginRequest request, CancellationToken ct)
         {
+            // Thực hiện Validate dữ liệu đầu vào
+            var validationResult = await _loginValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Dữ liệu đăng nhập không hợp lệ.");
+            }
+
             var result = await _authService.LoginAsync(request, ct);
             return Ok(ApiResponse<AuthResponse>.Ok(result, "Login successful."));
         }
@@ -48,8 +84,31 @@ namespace KIDIO.API.Controllers
         public async Task<ActionResult<ApiResponse<string>>> VerifyEmail(
             [FromQuery] string token, CancellationToken ct)
         {
+            // Token dạng query string thô chỉ cần check đơn giản nếu trống
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new AppException("Verification token is required.");
+            }
+
             await _authService.VerifyEmailAsync(token, ct);
             return Ok(ApiResponse<string>.Ok("Email verified successfully! You can now log in."));
+        }
+
+        [HttpPost("resend-verification")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<object>>> ResendVerification(
+            [FromBody] ResendVerificationRequest request, CancellationToken ct)
+        {
+            // Thực hiện Validate dữ liệu đầu vào
+            var validationResult = await _resendValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Email không hợp lệ.");
+            }
+
+            await _authService.ResendVerificationEmailAsync(request.Email, ct);
+            return Ok(ApiResponse<object>.Ok(null, "Verification email resent."));
         }
 
         /// <summary>
@@ -60,6 +119,14 @@ namespace KIDIO.API.Controllers
         public async Task<ActionResult<ApiResponse<AuthResponse>>> GoogleLogin(
             [FromBody] GoogleLoginRequest request, CancellationToken ct)
         {
+            // Thực hiện Validate dữ liệu đầu vào
+            var validationResult = await _googleLoginValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Google IdToken không hợp lệ.");
+            }
+
             var result = await _authService.GoogleLoginAsync(request.IdToken, ct);
             return Ok(ApiResponse<AuthResponse>.Ok(result, "Login successful."));
         }
@@ -72,6 +139,14 @@ namespace KIDIO.API.Controllers
         public async Task<ActionResult<ApiResponse<AuthResponse>>> Refresh(
             [FromBody] RefreshTokenRequest request, CancellationToken ct)
         {
+            // Thực hiện Validate dữ liệu đầu vào
+            var validationResult = await _refreshValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Refresh Token không hợp lệ.");
+            }
+
             var result = await _authService.RefreshTokenAsync(request.RefreshToken, ct);
             return Ok(ApiResponse<AuthResponse>.Ok(result));
         }

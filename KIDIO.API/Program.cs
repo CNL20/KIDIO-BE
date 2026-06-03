@@ -1,7 +1,9 @@
-﻿using KIDIO.API.Middleware;
+﻿using FluentValidation;
+using KIDIO.API.Middleware;
 using KIDIO.API.Services;
 using KIDIO.Business.Interfaces;
 using KIDIO.Business.Services;
+using KIDIO.Business.Validators.AuthValidators;
 using KIDIO.Common;
 using KIDIO.Data;
 using KIDIO.Data.Entities;
@@ -35,6 +37,8 @@ builder.Services.Configure<AzureSpeechSettings>(
     builder.Configuration.GetSection("AzureSpeech"));
 builder.Services.Configure<AISettings>(
     builder.Configuration.GetSection("AISettings"));
+// Cấu hình quét tự động toàn bộ Validator nằm chung Assembly với RegisterRequestValidator
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
 // =========================
 // DATABASE

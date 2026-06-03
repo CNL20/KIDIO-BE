@@ -21,15 +21,28 @@ namespace KIDIO.API.Middleware
             {
                 await _next(context);
             }
-            catch(AppException ex)
+            // 1. Đưa các Exception cụ thể (Thằng con) lên TRÊN CÙNG
+            catch (UnauthorizedException ex)
             {
-                context.Response.StatusCode = ex.StatusCode;
+                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 401
                 await WriteResponse(context, ex.Message);
             }
+            catch (NotFoundException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound; // 404
+                await WriteResponse(context, ex.Message);
+            }
+            // 2. Đưa Exception chung (Thằng cha) xuống DƯỚI
+            catch (AppException ex)
+            {
+                context.Response.StatusCode = ex.StatusCode; // 400
+                await WriteResponse(context, ex.Message);
+            }
+            // 3. Lỗi hệ thống nghiêm trọng luôn nằm cuối cùng
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exception");
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                _logger.LogError(ex, "Unhandled exception occurred");
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError; // 500
                 await WriteResponse(context, "An unexpected error occurred.");
             }
         }

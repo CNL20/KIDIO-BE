@@ -44,12 +44,6 @@ namespace KIDIO.Business.Services
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
         {
-            // 1. Kiểm tra mật khẩu nhập lại có khớp hay không
-            if (!string.Equals(request.Password, request.ConfirmPassword))
-            {
-                throw new AppException("The re-entered password does not match.");
-            }
-
             // 2. Kiểm tra Email này đã tồn tại trong hệ thống chưa
             var existingUser = await _uow.Users.FirstOrDefaultAsync(
                 u => u.Email.ToLower() == request.Email.ToLower(), ct);
@@ -302,6 +296,36 @@ namespace KIDIO.Business.Services
             await _uow.SaveChangesAsync(ct);
 
             return true;
+        }
+
+        public async Task ResendVerificationEmailAsync(string email, CancellationToken ct = default)
+        {
+            var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), ct)
+                       ?? throw new NotFoundException("User");
+
+            if (user is null)
+            {
+                return;
+            }
+
+            if (user.IsEmailConfirmed)
+            {
+                throw new AppException("Email is already confirmed.");
+            }
+
+            var verificationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                .Replace("=", "").Replace("+", "").Replace("/", "");
+
+            user.EmailVerificationToken = verificationToken;
+            user.EmailVerificationTokenExpiryTime = DateTime.UtcNow.AddHours(24);
+
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+
+            var confirmationLink = $"https://localhost:7014/api/auth/verify-email?token={verificationToken}";
+            var emailBody = $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+
+            await _emailService.SendEmailAsync(user.Email, "KIDIO - Confirm Your Email", emailBody);
         }
     }
 }

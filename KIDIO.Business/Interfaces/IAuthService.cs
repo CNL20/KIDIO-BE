@@ -15,5 +15,7 @@ namespace KIDIO.Business.Interfaces
         Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
         Task RevokeTokenAsync(Guid userId, CancellationToken ct = default);
         Task<bool> VerifyEmailAsync(string token, CancellationToken ct = default);
+        Task ResendVerificationEmailAsync(string email, CancellationToken ct = default);
+
     }
 }
