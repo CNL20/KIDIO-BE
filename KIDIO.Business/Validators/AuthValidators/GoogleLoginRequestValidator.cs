@@ -14,7 +14,7 @@ namespace KIDIO.Business.Validators.AuthValidators
         public GoogleLoginRequestValidator()
         {
             RuleFor(x => x.IdToken)
-                .NotEmpty().WithMessage("Google IdToken không được để trống.");
+                .NotEmpty().WithMessage("The Google ID Token cannot be left blank.");
         }
     }
 }

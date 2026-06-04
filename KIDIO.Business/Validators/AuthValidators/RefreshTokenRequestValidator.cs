@@ -14,7 +14,7 @@ namespace KIDIO.Business.Validators.AuthValidators
         public RefreshTokenRequestValidator()
         {
             RuleFor(x => x.RefreshToken)
-                .NotEmpty().WithMessage("Refresh Token không được để trống.");
+                .NotEmpty().WithMessage("Refresh Token cannot be left blank.");
         }
     }
 }

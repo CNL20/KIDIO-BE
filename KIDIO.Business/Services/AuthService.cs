@@ -27,19 +27,22 @@ namespace KIDIO.Business.Services
         private readonly GoogleOAuthSettings _google;
         private readonly AdminSettings _admin;
         private readonly IEmailService _emailService;
+        private readonly UrlSettings _urlSettings;
 
         public AuthService(
          IUnitOfWork uow,
          IOptions<JwtSettings> jwt,
          IOptions<GoogleOAuthSettings> google,
          IOptions<AdminSettings> admin,
-         IEmailService emailService) 
+         IEmailService emailService,
+         IOptions<UrlSettings> urlSettings) 
         {
             _uow = uow;
             _jwt = jwt.Value;
             _google = google.Value;
             _admin = admin.Value;
-            _emailService = emailService; 
+            _emailService = emailService;
+            _urlSettings = urlSettings.Value;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -79,8 +82,8 @@ namespace KIDIO.Business.Services
             await _uow.Users.AddAsync(newUser, ct);
             await _uow.SaveChangesAsync(ct);
 
-            var confirmationLink = $"https://localhost:7014/api/auth/verify-email?token={verificationToken}";
-            var emailBody = $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+            string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
+            string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
 
             await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
             // 6. Trả về thông báo thành công để FE chuyển hướng sang trang Login
@@ -298,6 +301,24 @@ namespace KIDIO.Business.Services
             return true;
         }
 
+        private async Task<string> LoadEmailTemplateWithLinkAsync(string confirmationLink)
+        {
+            // 1. Thiết lập vị trí tệp mẫu nằm trong thư mục gốc chạy của dự án Web API
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "VerifyEmail.html");
+
+            // 2. Cơ chế dự phòng (Fallback) nếu lỡ quên chưa copy file HTML vào thư mục build
+            if (!File.Exists(templatePath))
+            {
+                return $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+            }
+
+            // 3. Đọc toàn bộ chuỗi HTML tĩnh từ tệp tin
+            string templateContent = await File.ReadAllTextAsync(templatePath);
+
+            // 4. Gán giá trị link của Frontend vào đúng vị trí {{ConfirmationLink}} trong file HTML
+            return templateContent.Replace("{{ConfirmationLink}}", confirmationLink);
+        }
+
         public async Task ResendVerificationEmailAsync(string email, CancellationToken ct = default)
         {
             var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), ct)
@@ -322,8 +343,8 @@ namespace KIDIO.Business.Services
             _uow.Users.Update(user);
             await _uow.SaveChangesAsync(ct);
 
-            var confirmationLink = $"https://localhost:7014/api/auth/verify-email?token={verificationToken}";
-            var emailBody = $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+            string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
+            string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
 
             await _emailService.SendEmailAsync(user.Email, "KIDIO - Confirm Your Email", emailBody);
         }

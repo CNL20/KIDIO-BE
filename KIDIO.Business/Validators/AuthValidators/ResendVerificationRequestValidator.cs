@@ -14,8 +14,8 @@ namespace KIDIO.Business.Validators.AuthValidators
         public ResendVerificationRequestValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email không được để trống.")
-                .EmailAddress().WithMessage("Định dạng email không hợp lệ.");
+                .NotEmpty().WithMessage("The email address cannot be left blank.")
+                .EmailAddress().WithMessage("Invalid email format.");
         }
     }
 }

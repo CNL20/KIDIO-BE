@@ -14,26 +14,26 @@ namespace KIDIO.Business.Validators.AuthValidators
         public RegisterRequestValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email không được để trống.")
-                .EmailAddress().WithMessage("Định dạng email không hợp lệ.")
-                .MaximumLength(100).WithMessage("Email không được vượt quá 100 ký tự.");
+                .NotEmpty().WithMessage("The email address cannot be left blank.")
+                .EmailAddress().WithMessage("Invalid email format.")
+                .MaximumLength(100).WithMessage("Email addresses must not exceed 100 characters.");
 
             RuleFor(x => x.DisplayName)
-                .NotEmpty().WithMessage("Tên hiển thị không được để trống.")
-                .MinimumLength(2).WithMessage("Tên hiển thị phải có ít nhất 2 ký tự.")
-                .MaximumLength(50).WithMessage("Tên hiển thị không được vượt quá 50 ký tự.");
+                .NotEmpty().WithMessage("The display name cannot be left blank.")
+                .MinimumLength(2).WithMessage("The display name must have at least 2 characters.")
+                .MaximumLength(50).WithMessage("The display name must not exceed 50 characters.");
 
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Mật khẩu không được để trống.")
-                .MinimumLength(8).WithMessage("Mật khẩu phải có ít nhất 8 ký tự.")
-                .Matches(@"[A-Z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa.")
-                .Matches(@"[a-z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ cái viết thường.")
-                .Matches(@"[0-9]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ số.")
-                .Matches(@"[\^$*.\[\]{}()?""!@#%&/\\,><':;|_~`]").WithMessage("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.");
+                .NotEmpty().WithMessage("The password cannot be left blank.")
+                .MinimumLength(8).WithMessage("The password must have at least 8 characters.")
+                .Matches(@"[A-Z]").WithMessage("The password must contain at least one uppercase letter.")
+                .Matches(@"[a-z]").WithMessage("The password must contain at least one lowercase letter.")
+                .Matches(@"[0-9]").WithMessage("The password must contain at least one digit.")
+                .Matches(@"[\^$*.\[\]{}()?""!@#%&/\\,><':;|_~`]").WithMessage("The password must contain at least one special character.");
 
             RuleFor(x => x.ConfirmPassword)
-                .NotEmpty().WithMessage("Vui lòng nhập lại mật khẩu xác nhận.")
-                .Equal(x => x.Password).WithMessage("Mật khẩu nhập lại không khớp với mật khẩu đã nhập.");
+                .NotEmpty().WithMessage("Please re-enter your confirmation password.")
+                .Equal(x => x.Password).WithMessage("The re-entered password does not match the previously entered password.");
         }
     }
 }

@@ -37,6 +37,9 @@ builder.Services.Configure<AzureSpeechSettings>(
     builder.Configuration.GetSection("AzureSpeech"));
 builder.Services.Configure<AISettings>(
     builder.Configuration.GetSection("AISettings"));
+builder.Services.Configure<UrlSettings>(
+    builder.Configuration.GetSection("UrlSettings"));
+
 // Cấu hình quét tự động toàn bộ Validator nằm chung Assembly với RegisterRequestValidator
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 

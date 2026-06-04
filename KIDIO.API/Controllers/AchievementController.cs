@@ -59,7 +59,7 @@ public class AchievementController : ControllerBase
     {
         var result = await _achievementService.GetDefinitionByIdAsync(id, ct);
         if (result == null)
-            return NotFound(ApiResponse<AchievementDefinitionResponse>.Fail("Định nghĩa huy hiệu không tìm thấy."));
+            return NotFound(ApiResponse<AchievementDefinitionResponse>.Fail("Definition of badge not found."));
         return Ok(ApiResponse<AchievementDefinitionResponse>.Ok(result));
     }
 
@@ -86,7 +86,7 @@ public class AchievementController : ControllerBase
     {
         var result = await _achievementService.UpdateDefinitionAsync(id, request, ct);
         if (result == null)
-            return NotFound(ApiResponse<AchievementDefinitionResponse>.Fail("Định nghĩa huy hiệu không tìm thấy."));
+            return NotFound(ApiResponse<AchievementDefinitionResponse>.Fail("Definition of badge not found."));
         return Ok(ApiResponse<AchievementDefinitionResponse>.Ok(result));
     }
 
@@ -99,7 +99,7 @@ public class AchievementController : ControllerBase
     {
         var success = await _achievementService.DeleteDefinitionAsync(id, ct);
         if (!success)
-            return NotFound(ApiResponse<bool>.Fail("Định nghĩa huy hiệu không tìm thấy."));
+            return NotFound(ApiResponse<bool>.Fail("Definition of badge not found."));
         return Ok(ApiResponse<bool>.Ok(true));
     }
 
@@ -112,7 +112,7 @@ public class AchievementController : ControllerBase
     {
         var success = await _achievementService.RestoreDefinitionAsync(id, ct);
         if (!success)
-            return NotFound(ApiResponse<bool>.Fail("Định nghĩa huy hiệu không tìm thấy hoặc chưa bị xóa."));
+            return NotFound(ApiResponse<bool>.Fail("The badge definition was not found or has not been deleted."));
         return Ok(ApiResponse<bool>.Ok(true));
     }
 
@@ -127,7 +127,7 @@ public class AchievementController : ControllerBase
         {
             var success = await _achievementService.HardDeleteDefinitionAsync(id, ct);
             if (!success)
-                return NotFound(ApiResponse<bool>.Fail("Định nghĩa huy hiệu không tìm thấy."));
+                return NotFound(ApiResponse<bool>.Fail("Definition of badge not found."));
             return Ok(ApiResponse<bool>.Ok(true));
         }
         catch (AppException ex)

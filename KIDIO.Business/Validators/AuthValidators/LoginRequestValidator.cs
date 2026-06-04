@@ -14,11 +14,11 @@ namespace KIDIO.Business.Validators.AuthValidators
         public LoginRequestValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email không được để trống.")
-                .EmailAddress().WithMessage("Định dạng email không hợp lệ.");
+                .NotEmpty().WithMessage("Email cannot be blank.")
+                .EmailAddress().WithMessage("Invalid email format.");
 
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Mật khẩu không được để trống.");
+                .NotEmpty().WithMessage("Password cannot be blank.");
         }
     }
 }

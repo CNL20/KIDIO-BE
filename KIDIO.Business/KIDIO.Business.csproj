@@ -20,4 +20,10 @@
 	<PackageReference Include="Google.Apis.Auth" Version="1.74.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Templates\VerifyLink.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

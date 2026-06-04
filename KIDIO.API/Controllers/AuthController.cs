@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using static KIDIO.Business.DTOs.Auth.AuthDtos;
 using System.Security.Claims;
 using FluentValidation; // Thêm thư viện FluentValidation
+using System.IO; // Thêm thư viện để đọc file HTML template
 
 namespace KIDIO.API.Controllers
 {
@@ -14,7 +15,7 @@ namespace KIDIO.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-
+        private readonly IConfiguration _configuration;
         // Khai báo các Validator cho từng loại Request
         private readonly IValidator<RegisterRequest> _registerValidator;
         private readonly IValidator<LoginRequest> _loginValidator;
@@ -25,6 +26,7 @@ namespace KIDIO.API.Controllers
         // Inject tất cả Validator qua Constructor
         public AuthController(
             IAuthService authService,
+            IConfiguration configuration,
             IValidator<RegisterRequest> registerValidator,
             IValidator<LoginRequest> loginValidator,
             IValidator<ResendVerificationRequest> resendValidator,
@@ -32,6 +34,7 @@ namespace KIDIO.API.Controllers
             IValidator<RefreshTokenRequest> refreshValidator)
         {
             _authService = authService;
+            _configuration = configuration;
             _registerValidator = registerValidator;
             _loginValidator = loginValidator;
             _resendValidator = resendValidator;
@@ -52,7 +55,7 @@ namespace KIDIO.API.Controllers
             if (!validationResult.IsValid)
             {
                 var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
-                throw new AppException(firstError ?? "Dữ liệu đăng ký không hợp lệ.");
+                throw new AppException(firstError ?? "The registration data is invalid.");
             }
 
             var result = await _authService.RegisterAsync(request, ct);
@@ -69,7 +72,7 @@ namespace KIDIO.API.Controllers
             if (!validationResult.IsValid)
             {
                 var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
-                throw new AppException(firstError ?? "Dữ liệu đăng nhập không hợp lệ.");
+                throw new AppException(firstError ?? "Invalid login data.");
             }
 
             var result = await _authService.LoginAsync(request, ct);
@@ -81,17 +84,50 @@ namespace KIDIO.API.Controllers
         /// </summary>
         [HttpGet("verify-email")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<string>>> VerifyEmail(
-            [FromQuery] string token, CancellationToken ct)
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token, CancellationToken ct)
         {
-            // Token dạng query string thô chỉ cần check đơn giản nếu trống
-            if (string.IsNullOrEmpty(token))
+            // Do file đã được cấu hình tự động copy ra thư mục output khi Build, 
+            // nên tầng API vẫn đọc trực tiếp từ thư mục chạy "Templates" cực kỳ dễ dàng:
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "VerifyLink.html");
+
+            if (!System.IO.File.Exists(templatePath))
             {
-                throw new AppException("Verification token is required.");
+                // Đoạn này để phòng hờ nếu bạn quên chỉnh "Copy if newer" khiến file không tìm thấy
+                return StatusCode(500, "The system is missing the configuration file for the trading interface.");
             }
 
-            await _authService.VerifyEmailAsync(token, ct);
-            return Ok(ApiResponse<string>.Ok("Email verified successfully! You can now log in."));
+            string htmlContent = await System.IO.File.ReadAllTextAsync(templatePath, ct);
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                htmlContent = htmlContent
+                    .Replace("{{StatusContent}}", "<h2 class='error'>Verification failed: Token missing!</h2>")
+                    .Replace("{{Status}}", "failed");
+                return Content(htmlContent, "text/html");
+            }
+
+            try
+            {
+                await _authService.VerifyEmailAsync(token, ct);
+
+                htmlContent = htmlContent
+                    .Replace("{{StatusContent}}", "<h2 class='success'>Your KIDIO account has been successfully activated!</h2>")
+                    .Replace("{{Status}}", "success");
+            }
+            catch (AppException)
+            {
+                htmlContent = htmlContent
+                    .Replace("{{StatusContent}}", "<h2 class='error'>The verification link is invalid or has expired!</h2>")
+                    .Replace("{{Status}}", "invalid");
+            }
+            catch
+            {
+                htmlContent = htmlContent
+                    .Replace("{{StatusContent}}", "<h2 class='error'>The system is busy, please try again later!</h2>")
+                    .Replace("{{Status}}", "server_error");
+            }
+
+            return Content(htmlContent, "text/html");
         }
 
         [HttpPost("resend-verification")]
@@ -104,7 +140,7 @@ namespace KIDIO.API.Controllers
             if (!validationResult.IsValid)
             {
                 var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
-                throw new AppException(firstError ?? "Email không hợp lệ.");
+                throw new AppException(firstError ?? "Invalid email address.");
             }
 
             await _authService.ResendVerificationEmailAsync(request.Email, ct);
@@ -124,7 +160,7 @@ namespace KIDIO.API.Controllers
             if (!validationResult.IsValid)
             {
                 var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
-                throw new AppException(firstError ?? "Google IdToken không hợp lệ.");
+                throw new AppException(firstError ?? "The Google ID Token is invalid.");
             }
 
             var result = await _authService.GoogleLoginAsync(request.IdToken, ct);
@@ -144,7 +180,7 @@ namespace KIDIO.API.Controllers
             if (!validationResult.IsValid)
             {
                 var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
-                throw new AppException(firstError ?? "Refresh Token không hợp lệ.");
+                throw new AppException(firstError ?? "The Refresh Token is invalid.");
             }
 
             var result = await _authService.RefreshTokenAsync(request.RefreshToken, ct);
