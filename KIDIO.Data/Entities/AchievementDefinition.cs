@@ -10,5 +10,7 @@ public class AchievementDefinition : BaseEntity
     public string? Description { get; set; }                 // Mô tả chi tiết
     public string? BadgeUrl { get; set; }                    // Link icon/badge
     public int OrderIndex { get; set; } = 0;                // Thứ tự hiển thị
-    public bool IsActive { get; set; } = true;              // Có đang kích hoạt hay không
+    public bool IsActive { get; set; } = true;
+
+    public virtual ICollection<Achievement> Achievements { get; set; } = new List<Achievement>();
 }

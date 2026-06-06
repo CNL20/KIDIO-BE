@@ -32,7 +32,9 @@ namespace KIDIO.Data.Entities
             modelBuilder.Entity<Topic>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Vocabulary>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<AchievementDefinition>().HasQueryFilter(x => !x.IsDeleted);
-
+            modelBuilder.Entity<Achievement>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<LessonProgress>().HasQueryFilter(x => !x.Child.IsDeleted);
+            modelBuilder.Entity<PronunciationLog>().HasQueryFilter(x => !x.Child.IsDeleted);
             // User
             modelBuilder.Entity<User>(e =>
             {
@@ -49,6 +51,25 @@ namespace KIDIO.Data.Entities
                  .HasForeignKey(c => c.ParentId)
                  .OnDelete(DeleteBehavior.Cascade);
                 e.Property(c => c.Name).HasMaxLength(100);
+            });
+
+            // Achievement -> AchievementDefinition & Child
+            modelBuilder.Entity<Achievement>(e =>
+            {
+                // Cấu hình quan hệ với AchievementDefinition (Mới thêm)
+                e.HasOne(a => a.AchievementDefinition)
+                 .WithMany(ad => ad.Achievements)
+                 .HasForeignKey(a => a.AchievementDefinitionId)
+                 .OnDelete(DeleteBehavior.Restrict); // Dùng Restrict để tránh xóa nhầm Definition gốc làm mất lịch sử của trẻ
+
+                // Cấu hình quan hệ với Child (Đã có sẵn trong Entity gốc nhưng nên cấu hình rõ ràng ở đây)
+                e.HasOne(a => a.Child)
+                 .WithMany(c => c.Achievements)
+                 .HasForeignKey(a => a.ChildId)
+                 .OnDelete(DeleteBehavior.Cascade); // Nếu xóa tài khoản Đứa trẻ thì các huy chương của trẻ tự động xóa theo
+
+                // Nếu muốn, bạn có thể tạo một Index Unique để đảm bảo 1 đứa trẻ chỉ nhận 1 danh hiệu 1 lần duy nhất:
+                // e.HasIndex(a => new { a.ChildId, a.AchievementDefinitionId }).IsUnique();
             });
 
             // LessonProgress: unique (ChildId, LessonId)
