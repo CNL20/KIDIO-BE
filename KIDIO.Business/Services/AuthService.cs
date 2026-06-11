@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -301,22 +301,88 @@ namespace KIDIO.Business.Services
             return true;
         }
 
-        private async Task<string> LoadEmailTemplateWithLinkAsync(string confirmationLink)
+        public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken ct = default)
+        {
+            var user = await _uow.Users.GetByIdAsync(userId, ct)
+                ?? throw new NotFoundException("User");
+
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                throw new AppException("This account is managed by Google Sign-In and does not have a local password.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
+            {
+                throw new AppException("Incorrect old password.");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+        }
+
+        public async Task ForgotPasswordAsync(string email, CancellationToken ct = default)
+        {
+            var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), ct);
+            if (user is null || string.IsNullOrEmpty(user.PasswordHash))
+            {
+                // To prevent email enumeration, we just return
+                return;
+            }
+
+            var resetToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                .Replace("=", "").Replace("+", "").Replace("/", "");
+
+            user.ResetPasswordToken = resetToken;
+            user.ResetPasswordTokenExpiryTime = DateTime.UtcNow.AddHours(1);
+
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+
+            string resetLink = $"{_urlSettings.BackendUrl}/api/auth/reset-password-page?token={resetToken}";
+            string emailBody = await LoadEmailTemplateWithLinkAsync(resetLink, "ResetPassword.html");
+
+            await _emailService.SendEmailAsync(user.Email, "KIDIO - Reset Your Password", emailBody);
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+        {
+            var user = await _uow.Users.FirstOrDefaultAsync(u => u.ResetPasswordToken == request.Token, ct)
+                ?? throw new AppException("Invalid or expired reset token.");
+
+            if (user.ResetPasswordTokenExpiryTime < DateTime.UtcNow)
+            {
+                throw new AppException("Reset token has expired.");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.ResetPasswordToken = null;
+            user.ResetPasswordTokenExpiryTime = null;
+
+            _uow.Users.Update(user);
+            await _uow.SaveChangesAsync(ct);
+        }
+
+        private async Task<string> LoadEmailTemplateWithLinkAsync(string link, string templateName = "VerifyEmail.html")
         {
             // 1. Thiết lập vị trí tệp mẫu nằm trong thư mục gốc chạy của dự án Web API
-            string templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "VerifyEmail.html");
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", templateName);
 
             // 2. Cơ chế dự phòng (Fallback) nếu lỡ quên chưa copy file HTML vào thư mục build
             if (!File.Exists(templatePath))
             {
-                return $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{confirmationLink}'>Verify Email</a></p>";
+                if (templateName == "VerifyEmail.html")
+                    return $"<h3>Welcome to KIDIO!</h3><p>Please verify your email by clicking: <a href='{link}'>Verify Email</a></p>";
+                else
+                    return $"<h3>KIDIO Password Reset</h3><p>Please reset your password by clicking: <a href='{link}'>Reset Password</a></p>";
             }
 
             // 3. Đọc toàn bộ chuỗi HTML tĩnh từ tệp tin
             string templateContent = await File.ReadAllTextAsync(templatePath);
 
-            // 4. Gán giá trị link của Frontend vào đúng vị trí {{ConfirmationLink}} trong file HTML
-            return templateContent.Replace("{{ConfirmationLink}}", confirmationLink);
+            // 4. Gán giá trị link của Frontend vào đúng vị trí {{Link}} trong file HTML
+            return templateContent.Replace("{{ConfirmationLink}}", link).Replace("{{ResetLink}}", link);
         }
 
         public async Task ResendVerificationEmailAsync(string email, CancellationToken ct = default)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,17 @@ namespace KIDIO.Business.DTOs.Auth
             string Password,
             string ConfirmPassword, 
             string DisplayName
+        );
+        public record ChangePasswordRequest(
+            string OldPassword, 
+            string NewPassword, 
+            string ConfirmNewPassword
+        );
+        public record ForgotPasswordRequest(string Email);
+        public record ResetPasswordRequest(
+            string Token, 
+            string NewPassword, 
+            string ConfirmNewPassword
         );
         //Response
         public record RegisterResponse(

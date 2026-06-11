@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +16,9 @@ namespace KIDIO.Business.Interfaces
         Task RevokeTokenAsync(Guid userId, CancellationToken ct = default);
         Task<bool> VerifyEmailAsync(string token, CancellationToken ct = default);
         Task ResendVerificationEmailAsync(string email, CancellationToken ct = default);
+        Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken ct = default);
+        Task ForgotPasswordAsync(string email, CancellationToken ct = default);
+        Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 
     }
 }

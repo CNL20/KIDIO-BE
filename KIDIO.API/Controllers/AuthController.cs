@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.Interfaces;
+using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +22,9 @@ namespace KIDIO.API.Controllers
         private readonly IValidator<ResendVerificationRequest> _resendValidator;
         private readonly IValidator<GoogleLoginRequest> _googleLoginValidator;
         private readonly IValidator<RefreshTokenRequest> _refreshValidator;
+        private readonly IValidator<ChangePasswordRequest> _changePasswordValidator;
+        private readonly IValidator<ForgotPasswordRequest> _forgotPasswordValidator;
+        private readonly IValidator<ResetPasswordRequest> _resetPasswordValidator;
 
         // Inject tất cả Validator qua Constructor
         public AuthController(
@@ -31,7 +34,10 @@ namespace KIDIO.API.Controllers
             IValidator<LoginRequest> loginValidator,
             IValidator<ResendVerificationRequest> resendValidator,
             IValidator<GoogleLoginRequest> googleLoginValidator,
-            IValidator<RefreshTokenRequest> refreshValidator)
+            IValidator<RefreshTokenRequest> refreshValidator,
+            IValidator<ChangePasswordRequest> changePasswordValidator,
+            IValidator<ForgotPasswordRequest> forgotPasswordValidator,
+            IValidator<ResetPasswordRequest> resetPasswordValidator)
         {
             _authService = authService;
             _configuration = configuration;
@@ -40,6 +46,9 @@ namespace KIDIO.API.Controllers
             _resendValidator = resendValidator;
             _googleLoginValidator = googleLoginValidator;
             _refreshValidator = refreshValidator;
+            _changePasswordValidator = changePasswordValidator;
+            _forgotPasswordValidator = forgotPasswordValidator;
+            _resetPasswordValidator = resetPasswordValidator;
         }
 
         /// <summary>
@@ -216,6 +225,88 @@ namespace KIDIO.API.Controllers
                 Role = User.FindFirstValue(ClaimTypes.Role)
             };
             return Ok(ApiResponse<object>.Ok(claims));
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<object>>> ChangePassword(
+            [FromBody] ChangePasswordRequest request, CancellationToken ct)
+        {
+            var validationResult = await _changePasswordValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Invalid data.");
+            }
+
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedAccessException());
+
+            await _authService.ChangePasswordAsync(userId, request, ct);
+            return Ok(ApiResponse<object>.Ok(null, "Password changed successfully."));
+        }
+
+        [HttpPost("forgot-password")] 
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<object>>> ForgotPassword(
+            [FromBody] ForgotPasswordRequest request, CancellationToken ct)
+        {
+            var validationResult = await _forgotPasswordValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Invalid data.");
+            }
+
+            await _authService.ForgotPasswordAsync(request.Email, ct);
+            return Ok(ApiResponse<object>.Ok(null, "If the email is registered, a password reset link has been sent."));
+        }
+
+        /// <summary>
+        /// Hiển thị trang HTML form để user nhập mật khẩu mới (link từ email)
+        /// </summary>
+        [HttpGet("reset-password-page")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPasswordPage([FromQuery] string token, CancellationToken ct)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "ResetPasswordPage.html");
+
+            if (!System.IO.File.Exists(templatePath))
+            {
+                return StatusCode(500, "The system is missing the reset password page template.");
+            }
+
+            string htmlContent = await System.IO.File.ReadAllTextAsync(templatePath, ct);
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                // Token không có → trả về lỗi ngay
+                return Content("<html><body style='font-family:sans-serif;text-align:center;padding:60px'>" +
+                    "<h2 style='color:#dc2626'>⚠️ Invalid Link</h2>" +
+                    "<p>The password reset link is missing a token. Please request a new reset link.</p>" +
+                    "</body></html>", "text/html");
+            }
+
+            // Nhúng token vào form ẩn trong HTML
+            htmlContent = htmlContent.Replace("{{ResetToken}}", token);
+
+            return Content(htmlContent, "text/html");
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<object>>> ResetPassword(
+            [FromBody] ResetPasswordRequest request, CancellationToken ct)
+        {
+            var validationResult = await _resetPasswordValidator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                var firstError = validationResult.Errors.Select(e => e.ErrorMessage).FirstOrDefault();
+                throw new AppException(firstError ?? "Invalid data.");
+            }
+
+            await _authService.ResetPasswordAsync(request, ct);
+            return Ok(ApiResponse<object>.Ok(null, "Password reset successfully. You can now login with your new password."));
         }
     }
 }

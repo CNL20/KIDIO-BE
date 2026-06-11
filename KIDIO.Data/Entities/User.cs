@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +28,10 @@ namespace KIDIO.Data.Entities
         public string? EmailVerificationToken { get; set; }
         public DateTime? EmailVerificationTokenExpiryTime { get; set; }
         public bool IsEmailConfirmed { get; set; } = false;
+
+        // Reset Password
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordTokenExpiryTime { get; set; }
 
         // Navigation
         public ICollection<Child> Children { get; set; } = new List<Child>();
