@@ -33,6 +33,9 @@ namespace KIDIO.Data.Entities
         public string? ResetPasswordToken { get; set; }
         public DateTime? ResetPasswordTokenExpiryTime { get; set; }
 
+        // Parental PIN
+        public string? ParentalPin { get; set; }
+
         // Navigation
         public ICollection<Child> Children { get; set; } = new List<Child>();
     }

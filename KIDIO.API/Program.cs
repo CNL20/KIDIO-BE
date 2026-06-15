@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using KIDIO.API.Middleware;
 using KIDIO.API.Services;
 using KIDIO.Business.Interfaces;
@@ -62,6 +62,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // =========================
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IChildService, ChildService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ILessonService, LessonService>();

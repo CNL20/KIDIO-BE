@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,6 +41,7 @@ namespace KIDIO.Data.Entities
                 e.HasIndex(u => u.Email).IsUnique();
                 e.Property(u => u.Email).HasMaxLength(256);
                 e.Property(u => u.DisplayName).HasMaxLength(100);
+                e.Property(u => u.ParentalPin).HasMaxLength(4);
             });
 
             // Child -> User (Parent)

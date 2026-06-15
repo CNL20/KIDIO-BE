@@ -1,2 +1,46 @@
-﻿GET https://localhost:7014/api/Auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYyNzAwOGYwLTBhNWMtNGJkMy1iNmI3LWY5YjUzNDA0MzZmNyIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImNodW5oYXRsYW0yMDA0QGdtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJOaOG6rXQgTMOibSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlBhcmVudCIsImp0aSI6ImMzZDRiMWM4LWRjZjYtNDYyZi05ODEyLTU1OTVkMGRiN2ZlMCIsImV4cCI6MTc3OTE5MDExOSwiaXNzIjoiS0lESU8iLCJhdWQiOiJLSURJTy1DbGllbnQifQ.mqFj815jvNDduQoD--5QGD6LVMezGvRUEZh4muCeCyY
+@host = https://localhost:7014
+@token = PLACE_YOUR_ACCESS_TOKEN_HERE
+@userId = PLACE_YOUR_USER_ID_HERE
+
+### 1. Đăng nhập để lấy Access Token và UserId
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "chunhatlam2004@gmail.com",
+  "password": "Mật khẩu của bạn"
+}
+
+### 2. Lấy thông tin tài khoản hiện tại (Me)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 3. Thiết lập / Cập nhật mã PIN mới (Parental PIN)
+POST {{host}}/api/users/parent-pin
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "newPin": "1234"
+}
+
+### 4. Xác thực mật khẩu khi quên mã PIN (Mật khẩu đúng -> true)
+POST {{host}}/api/users/verify-password
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "password": "Mật khẩu của bạn"
+}
+
+### 5. Xác thực mật khẩu khi quên mã PIN (Mật khẩu sai -> false)
+POST {{host}}/api/users/verify-password
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "password": "sai_mat_khau"
+}
