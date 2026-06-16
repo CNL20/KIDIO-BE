@@ -1,0 +1,16 @@
+﻿using KIDIO.Common;
+using KIDIO.Business.DTOs.Child;
+
+namespace KIDIO.Business.Interfaces;
+
+public interface IChildService
+{
+    Task<List<ChildSummaryResponse>> GetChildrenByParentAsync(Guid parentId, CancellationToken ct = default);
+    Task<PagedResponse<ChildSummaryResponse>> GetChildrenByParentPagedAsync(Guid parentId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default);
+    Task<ChildResponse> GetChildByIdAsync(Guid childId, Guid parentId, CancellationToken ct = default);
+    Task<ChildResponse> CreateChildAsync(Guid parentId, CreateChildRequest request, CancellationToken ct = default);
+    Task<ChildResponse> UpdateChildAsync(Guid childId, Guid parentId, UpdateChildRequest request, CancellationToken ct = default);
+    Task DeleteChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
+    Task RestoreChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
+    Task HardDeleteChildAsync(Guid childId, CancellationToken ct = default);
+}

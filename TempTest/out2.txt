@@ -1,0 +1,11 @@
+C:\Users\Admin\Documents\Ky_8\EXE_201\KIDIO\TempTest\Program.cs(1,851): warning CS0618: 'JsonWebTokenHandler.ValidateToken(string, TokenValidationParameters)' is obsolete: '`JsonWebTokens.ValidateToken(string, TokenValidationParameters)` has been deprecated and will be removed in a future release. Use `JsonWebTokens.ValidateTokenAsync(string, TokenValidationParameters)` instead. For more information, see https://aka.ms/IdentityModel/7-breaking-changes' [C:\Users\Admin\Documents\Ky_8\EXE_201\KIDIO\TempTest\TempTest.csproj]
+Error: System.ArgumentException: IDX14102: Unable to decode the header '[PII of type 'Microsoft.IdentityModel.Logging.SecurityArtifact' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]' as Base64Url encoded string.
+ ---> System.FormatException: IDX10400: Unable to decode: '[PII of type 'System.String' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]' as Base64url encoded string.
+   at Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(ReadOnlySpan`1 strSpan, Span`1 output, Boolean needReplace, Int32 decodedLength)
+   at Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(ReadOnlySpan`1 strSpan, Span`1 output)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebToken.CreateClaimSet(ReadOnlySpan`1 strSpan, Int32 startIndex, Int32 length, Boolean createHeaderClaimSet)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebToken.ReadToken(ReadOnlyMemory`1 encodedTokenMemory)
+   --- End of inner exception stack trace ---
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebToken.ReadToken(ReadOnlyMemory`1 encodedTokenMemory)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebToken..ctor(String jwtEncodedString)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ReadToken(String token, TokenValidationParameters validationParameters)
