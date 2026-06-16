@@ -222,6 +222,12 @@ public class PronunciationScoringService : IPronunciationScoringService
             var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _azureSpeechSettings.AzureSpeechKey);
 
+            // Add the required Pronunciation-Assessment header
+            var pronAssessmentParamsJson = "{\"ReferenceText\":\"" + targetText + "\",\"GradingSystem\":\"HundredMark\",\"Dimension\":\"Comprehensive\",\"EnableMiscue\":false}";
+            var pronAssessmentParamsBytes = Encoding.UTF8.GetBytes(pronAssessmentParamsJson);
+            var pronAssessmentHeader = Convert.ToBase64String(pronAssessmentParamsBytes);
+            httpClient.DefaultRequestHeaders.Add("Pronunciation-Assessment", pronAssessmentHeader);
+
             // Read audio file bytes
             using (var audioStream = audioFile.OpenReadStream())
             {
@@ -232,9 +238,7 @@ public class PronunciationScoringService : IPronunciationScoringService
                 var region = _azureSpeechSettings.AzureSpeechRegion.ToLower();
                 var url = $"https://{region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1" +
                     $"?language=en-US" +
-                    $"&referenceText={Uri.EscapeDataString(targetText)}" +
-                    $"&profanityOption=Masked" +
-                    $"&enableLanguageIdentification=false";
+                    $"&format=detailed";
 
                 using (var content = new ByteArrayContent(audioBytes))
                 {
@@ -294,13 +298,14 @@ public class PronunciationScoringService : IPronunciationScoringService
             var fluencyScore = 75;
             var completenessScore = 75;
 
-            if (root.TryGetProperty("PronunciationAssessment", out var assessmentElem))
+            if (root.TryGetProperty("NBest", out var nbestElem) && nbestElem.ValueKind == JsonValueKind.Array && nbestElem.GetArrayLength() > 0)
             {
-                if (assessmentElem.TryGetProperty("AccuracyScore", out var accElem))
+                var bestResult = nbestElem[0];
+                if (bestResult.TryGetProperty("AccuracyScore", out var accElem))
                     accuracyScore = (int)Math.Round(accElem.GetDouble());
-                if (assessmentElem.TryGetProperty("FluencyScore", out var fluElem))
+                if (bestResult.TryGetProperty("FluencyScore", out var fluElem))
                     fluencyScore = (int)Math.Round(fluElem.GetDouble());
-                if (assessmentElem.TryGetProperty("CompletenessScore", out var comElem))
+                if (bestResult.TryGetProperty("CompletenessScore", out var comElem))
                     completenessScore = (int)Math.Round(comElem.GetDouble());
             }
 

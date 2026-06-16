@@ -1,4 +1,4 @@
-﻿using MailKit.Net.Smtp;
+using MailKit.Net.Smtp;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
 using KIDIO.Business.Interfaces;
@@ -17,7 +17,7 @@ namespace KIDIO.Business.Services
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress(_config["EmailSettings:SenderName"], _config["EmailSettings:SenderEmail"]));
+            email.From.Add(new MailboxAddress(_config["EmailSettings:SenderName"] ?? "", _config["EmailSettings:SenderEmail"] ?? ""));
             email.To.Add(MailboxAddress.Parse(toEmail));
             email.Subject = subject;
 
@@ -25,8 +25,8 @@ namespace KIDIO.Business.Services
             email.Body = bodyBuilder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_config["EmailSettings:SmtpServer"], int.Parse(_config["EmailSettings:Port"]), MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_config["EmailSettings:SenderEmail"], _config["EmailSettings:AppPassword"]);
+            await smtp.ConnectAsync(_config["EmailSettings:SmtpServer"] ?? "", int.Parse(_config["EmailSettings:Port"] ?? "587"), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_config["EmailSettings:SenderEmail"] ?? "", _config["EmailSettings:AppPassword"] ?? "");
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
         }

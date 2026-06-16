@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Lesson;
+using KIDIO.Business.DTOs.Lesson;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -65,7 +65,7 @@ public class TopicController : ControllerBase
         Guid topicId, CancellationToken ct)
     {
         await _topicService.DeleteTopicAsync(topicId, ct);
-        return Ok(ApiResponse<object>.Ok(null, "Topic deleted."));
+        return Ok(ApiResponse<object>.Ok(null!, "Topic deleted."));
     }
 
     [HttpPatch("{topicId:guid}/restore")]

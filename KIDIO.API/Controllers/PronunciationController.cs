@@ -39,7 +39,7 @@ public class PronunciationController : ControllerBase
         try
         {
             var result = await _pronunciationService.SubmitPronunciationAsync(
-                GetCurrentUserId(),
+                request.ChildId,
                 request,
                 ct);
 

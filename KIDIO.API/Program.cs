@@ -48,7 +48,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>()
 // =========================
 
 builder.Services.AddDbContext<KidioDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // =========================

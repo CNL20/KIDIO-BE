@@ -153,7 +153,7 @@ namespace KIDIO.API.Controllers
             }
 
             await _authService.ResendVerificationEmailAsync(request.Email, ct);
-            return Ok(ApiResponse<object>.Ok(null, "Verification email resent."));
+            return Ok(ApiResponse<object>.Ok(null!, "Verification email resent."));
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace KIDIO.API.Controllers
                 ?? throw new UnauthorizedAccessException());
 
             await _authService.RevokeTokenAsync(userId, ct);
-            return Ok(ApiResponse<object>.Ok(null, "Logged out successfully."));
+            return Ok(ApiResponse<object>.Ok(null!, "Logged out successfully."));
         }
 
         /// <summary>
@@ -243,7 +243,7 @@ namespace KIDIO.API.Controllers
                 ?? throw new UnauthorizedAccessException());
 
             await _authService.ChangePasswordAsync(userId, request, ct);
-            return Ok(ApiResponse<object>.Ok(null, "Password changed successfully."));
+            return Ok(ApiResponse<object>.Ok(null!, "Password changed successfully."));
         }
 
         [HttpPost("forgot-password")] 
@@ -259,7 +259,7 @@ namespace KIDIO.API.Controllers
             }
 
             await _authService.ForgotPasswordAsync(request.Email, ct);
-            return Ok(ApiResponse<object>.Ok(null, "If the email is registered, a password reset link has been sent."));
+            return Ok(ApiResponse<object>.Ok(null!, "If the email is registered, a password reset link has been sent."));
         }
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace KIDIO.API.Controllers
             }
 
             await _authService.ResetPasswordAsync(request, ct);
-            return Ok(ApiResponse<object>.Ok(null, "Password reset successfully. You can now login with your new password."));
+            return Ok(ApiResponse<object>.Ok(null!, "Password reset successfully. You can now login with your new password."));
         }
     }
 }

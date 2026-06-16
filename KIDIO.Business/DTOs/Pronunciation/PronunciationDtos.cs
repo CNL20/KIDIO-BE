@@ -8,6 +8,11 @@ namespace KIDIO.Business.DTOs.Pronunciation;
 public class SubmitPronunciationRequest
 {
     /// <summary>
+    /// Child ID
+    /// </summary>
+    public Guid ChildId { get; set; }
+
+    /// <summary>
     /// Vocabulary ID to score pronunciation for
     /// </summary>
     public Guid VocabularyId { get; set; }
