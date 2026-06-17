@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.DTOs.Achievement;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
@@ -90,6 +90,13 @@ public class AchievementService : IAchievementService
         var lessonsCompleted = await _uow.LessonProgresses.Query()
             .CountAsync(p => p.ChildId == childId && p.IsCompleted, ct);
 
+        // Lấy số từ vựng bé đã phát âm đạt yêu cầu (Accuracy >= 60)
+        var wordsLearned = await _uow.PronunciationLogs.Query()
+            .Where(p => p.ChildId == childId && p.AccuracyScore >= 60)
+            .Select(p => p.TargetText)
+            .Distinct()
+            .CountAsync(ct);
+
         var newAchievements = new List<Achievement>();
 
         foreach (var def in definitions)
@@ -102,6 +109,7 @@ public class AchievementService : IAchievementService
                 "Stars" => child.TotalStars >= def.Threshold,
                 "Streak" => child.CurrentStreakDays >= def.Threshold,
                 "Lessons" => lessonsCompleted >= def.Threshold,
+                "Words" => wordsLearned >= def.Threshold,
                 _ => false
             };
 
