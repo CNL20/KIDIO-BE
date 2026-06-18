@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.DTOs.Achievement;
 using KIDIO.Business.DTOs.Progress;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
@@ -49,6 +49,8 @@ public class ProgressService : IProgressService
         var existing = await _uow.LessonProgresses.FirstOrDefaultAsync(
             p => p.ChildId == request.ChildId && p.LessonId == request.LessonId, ct);
 
+        int oldStars = existing?.StarsEarned ?? 0;
+
         if (existing is not null)
         {
             // Chỉ update nếu điểm cao hơn lần trước
@@ -87,7 +89,7 @@ public class ProgressService : IProgressService
         }
 
         // Cập nhật TotalStars và Streak cho child
-        await UpdateChildStatsAsync(child, isCompleted, stars, existing, ct);
+        await UpdateChildStatsAsync(child, isCompleted, stars, oldStars, ct);
 
         await _uow.SaveChangesAsync(ct);
 
@@ -250,50 +252,55 @@ public class ProgressService : IProgressService
     };
 
     private async Task UpdateChildStatsAsync(
-        Child child,
-        bool isCompleted,
-        int newStars,
-        LessonProgress progress,
-        CancellationToken ct)
+    Child child,
+    bool isCompleted,
+    int newStars,
+    // --- BẮT ĐẦU SỬA BỞI AI ---
+    // Đổi tham số từ `LessonProgress progress` thành `int oldStars`
+    int oldStars,
+    // --- KẾT THÚC SỬA BỞI AI ---
+    CancellationToken ct)
+{
+    if (!isCompleted) return;
+
+    // Cộng sao — chỉ cộng phần tăng thêm so với lần trước
+    // --- BẮT ĐẦU SỬA BỞI AI ---
+    // Tính delta từ oldStars được truyền vào
+    var starsDelta = Math.Max(0, newStars - oldStars);
+    // --- KẾT THÚC SỬA BỞI AI ---
+    child.TotalStars += starsDelta;
+
+    // Cập nhật streak
+    var today = DateTime.UtcNow.Date;
+
+    if (child.LastLessonAt.HasValue)
     {
-        if (!isCompleted) return;
+        var lastDate = child.LastLessonAt.Value.Date;
 
-        // Cộng sao — chỉ cộng phần tăng thêm so với lần trước
-        var oldStars = progress.StarsEarned;
-        var starsDelta = Math.Max(0, newStars - oldStars);
-        child.TotalStars += starsDelta;
-
-        // Cập nhật streak
-        var today = DateTime.UtcNow.Date;
-
-        if (child.LastLessonAt.HasValue)
+        if (lastDate == today)
         {
-            var lastDate = child.LastLessonAt.Value.Date;
-
-            if (lastDate == today)
-            {
-                // Hôm nay đã học rồi, không tăng streak
-            }
-            else if (lastDate == today.AddDays(-1))
-            {
-                // Ngày liên tiếp → tăng streak
-                child.CurrentStreakDays++;
-            }
-            else
-            {
-                // Bị gián đoạn → reset streak
-                child.CurrentStreakDays = 1;
-            }
+            // Hôm nay đã học rồi, không tăng streak
+        }
+        else if (lastDate == today.AddDays(-1))
+        {
+            // Ngày liên tiếp → tăng streak
+            child.CurrentStreakDays++;
         }
         else
         {
-            // Lần đầu học
+            // Bị gián đoạn → reset streak
             child.CurrentStreakDays = 1;
         }
-
-        child.LastLessonAt = DateTime.UtcNow;
-        _uow.Children.Update(child);
     }
+    else
+    {
+        // Lần đầu học
+        child.CurrentStreakDays = 1;
+    }
+
+    child.LastLessonAt = DateTime.UtcNow;
+    _uow.Children.Update(child);
+}
 
     private async Task<Child> VerifyChildOwnershipAsync(
         Guid childId, Guid parentId, CancellationToken ct)
