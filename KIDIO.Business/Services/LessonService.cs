@@ -143,6 +143,8 @@ public class LessonService : ILessonService
         _ = await _uow.Topics.GetByIdAsync(request.TopicId, ct)
             ?? throw new NotFoundException("Topic");
 
+if (await _uow.Lessons.Query().AnyAsync(l => l.TopicId == request.TopicId && l.Title.ToLower() == request.Title.ToLower().Trim(), ct))
+            throw new AppException($"Lesson title '{request.Title}' already exists in this topic.");
         var lesson = new Lesson
         {
             Title = request.Title.Trim(),
@@ -172,6 +174,9 @@ public class LessonService : ILessonService
     {
         var lesson = await _uow.Lessons.GetByIdAsync(lessonId, ct)
             ?? throw new NotFoundException("Lesson");
+
+        if (await _uow.Lessons.Query().AnyAsync(l => l.TopicId == lesson.TopicId && l.Id != lessonId && l.Title.ToLower() == request.Title.ToLower().Trim(), ct))
+            throw new AppException($"Lesson title '{request.Title}' already exists in this topic.");
 
         lesson.Title = request.Title.Trim();
         lesson.Description = request.Description;

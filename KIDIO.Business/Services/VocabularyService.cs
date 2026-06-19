@@ -240,6 +240,9 @@ public class VocabularyService : IVocabularyService
             throw new AppException(
                 $"Word '{request.Word}' already exists in this lesson.");
 
+        if (await _uow.Vocabularies.Query().AnyAsync(v => v.LessonId == request.LessonId && v.OrderIndex == request.OrderIndex, ct))
+            throw new AppException($"OrderIndex '{request.OrderIndex}' already exists in this lesson.");
+
         var vocab = new Vocabulary
         {
             Word = request.Word.Trim(),
