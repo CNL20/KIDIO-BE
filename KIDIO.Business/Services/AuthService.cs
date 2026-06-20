@@ -94,12 +94,12 @@ namespace KIDIO.Business.Services
                 await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
                 verificationMessage = "Account registration successful! Please check your email to verify your account before logging in.";
             }
-            catch (AppException ex) when (ex.StatusCode == 503)
+            catch (Exception ex)
             {
-                // Email service chưa cấu hình (thường xảy ra ở môi trường dev)
-                // Tài khoản đã được tạo — admin/user có thể dùng endpoint resend-verification
-                verificationMessage = "Account created successfully, but the verification email could not be sent (email service not configured). " +
-                                      "Please use the 'resend verification' feature or contact the administrator.";
+                // Email sending failed but the account is created successfully in DB.
+                // Do not block registration. Allow user to request resend later.
+                verificationMessage = "Account created successfully, but the verification email could not be sent. " +
+                                      $"Details: {ex.Message}. Please contact the administrator.";
             }
 
             // 7. Trả về thông báo thành công để FE chuyển hướng sang trang Login
