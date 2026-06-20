@@ -89,7 +89,8 @@ public class ProgressService : IProgressService
         }
 
         // Cập nhật TotalStars và Streak cho child
-        await UpdateChildStatsAsync(child, isCompleted, stars, oldStars, ct);
+        // [FIX #6] Gọi synchronous vì hàm này không có bất kỳ await nào bên trong
+        UpdateChildStats(child, isCompleted, stars, oldStars);
 
         await _uow.SaveChangesAsync(ct);
 
@@ -251,23 +252,19 @@ public class ProgressService : IProgressService
         _ => 0
     };
 
-    private async Task UpdateChildStatsAsync(
+
+    // [FIX #6] Đổi từ async Task sang void vì không có bất kỳ await nào bên trong.
+    // Việc khai báo async Task khi không có await tạo ra state machine không cần thiết.
+    private void UpdateChildStats(
     Child child,
     bool isCompleted,
     int newStars,
-    // --- BẮT ĐẦU SỬA BỞI AI ---
-    // Đổi tham số từ `LessonProgress progress` thành `int oldStars`
-    int oldStars,
-    // --- KẾT THÚC SỬA BỞI AI ---
-    CancellationToken ct)
+    int oldStars)
 {
     if (!isCompleted) return;
 
     // Cộng sao — chỉ cộng phần tăng thêm so với lần trước
-    // --- BẮT ĐẦU SỬA BỞI AI ---
-    // Tính delta từ oldStars được truyền vào
     var starsDelta = Math.Max(0, newStars - oldStars);
-    // --- KẾT THÚC SỬA BỞI AI ---
     child.TotalStars += starsDelta;
 
     // Cập nhật streak
@@ -301,6 +298,7 @@ public class ProgressService : IProgressService
     child.LastLessonAt = DateTime.UtcNow;
     _uow.Children.Update(child);
 }
+
 
     private async Task<Child> VerifyChildOwnershipAsync(
         Guid childId, Guid parentId, CancellationToken ct)

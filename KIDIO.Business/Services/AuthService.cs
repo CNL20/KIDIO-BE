@@ -15,7 +15,7 @@ using KIDIO.Data.Entities;
 using KIDIO.Data.Repositories;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.SqlServer.Server;
+// Removed unused Microsoft.SqlServer.Server import (project uses PostgreSQL)
 using static KIDIO.Business.DTOs.Auth.AuthDtos;
 
 namespace KIDIO.Business.Services
@@ -82,15 +82,31 @@ namespace KIDIO.Business.Services
             await _uow.Users.AddAsync(newUser, ct);
             await _uow.SaveChangesAsync(ct);
 
-            string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
-            string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
+            // 6. Gửi email xác nhận
+            // Bọc trong try/catch: tài khoản đã tạo thành công trong DB.
+            // Nếu email gửi thất bại (VD: chưa cấu hình SMTP ở môi trường dev), 
+            // không rollback tài khoản mà trả thông báo hướng dẫn resend.
+            string verificationMessage;
+            try
+            {
+                string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
+                string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
+                await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
+                verificationMessage = "Account registration successful! Please check your email to verify your account before logging in.";
+            }
+            catch (AppException ex) when (ex.StatusCode == 503)
+            {
+                // Email service chưa cấu hình (thường xảy ra ở môi trường dev)
+                // Tài khoản đã được tạo — admin/user có thể dùng endpoint resend-verification
+                verificationMessage = "Account created successfully, but the verification email could not be sent (email service not configured). " +
+                                      "Please use the 'resend verification' feature or contact the administrator.";
+            }
 
-            await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
-            // 6. Trả về thông báo thành công để FE chuyển hướng sang trang Login
+            // 7. Trả về thông báo thành công để FE chuyển hướng sang trang Login
             return new RegisterResponse(
                 Id: newUser.Id,
                 Email: newUser.Email,
-                Message: "Account registration successful! Please check your email to verify your account before logging in."
+                Message: verificationMessage
             );
         }
 
@@ -105,16 +121,18 @@ namespace KIDIO.Business.Services
                 throw new UnauthorizedException("This account was created using Google Sign-In. Please sign in with Google.");
             }
 
+            // [FIX #2] Kiểm tra xác thực email TRƯỚC khi verify mật khẩu để tránh side-channel attack.
+            // Nếu check sau verify password, kẻ tấn công biết được mật khẩu đúng/sai qua loại lỗi trả về.
+            if (!user.IsEmailConfirmed)
+            {
+                throw new UnauthorizedException("Your account has not been verified via email yet.");
+            }
+
             // Kiểm tra mật khẩu (Sử dụng BCrypt để verify mật khẩu thô và mật khẩu đã băm trong DB)
             bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
             if (!isValidPassword)
             {
                 throw new UnauthorizedException("Incorrect email or password.");
-            }
-
-            if (!user.IsEmailConfirmed)
-            {
-                throw new UnauthorizedException("Your account has not been verified via email yet.");
             }
 
             // Cấp Token giống hệt bên GoogleLogin
@@ -343,7 +361,15 @@ namespace KIDIO.Business.Services
             string resetLink = $"{_urlSettings.BackendUrl}/api/auth/reset-password-page?token={resetToken}";
             string emailBody = await LoadEmailTemplateWithLinkAsync(resetLink, "ResetPassword.html");
 
-            await _emailService.SendEmailAsync(user.Email, "KIDIO - Reset Your Password", emailBody);
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, "KIDIO - Reset Your Password", emailBody);
+            }
+            catch (AppException)
+            {
+                // Anti-enumeration: không ré lộ lỗi email ra bên ngoài. Đã log trong EmailService.
+                // ForgotPassword không nên throw bất kỳ exception nào dù email gửi thất bại.
+            }
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
@@ -390,10 +416,8 @@ namespace KIDIO.Business.Services
             var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), ct)
                        ?? throw new NotFoundException("User");
 
-            if (user is null)
-            {
-                return;
-            }
+            // [FIX #1] Removed dead code: the `if (user is null)` block was unreachable
+            // because the `?? throw` above already guarantees user is non-null at this point.
 
             if (user.IsEmailConfirmed)
             {
@@ -412,7 +436,14 @@ namespace KIDIO.Business.Services
             string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
             string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
 
-            await _emailService.SendEmailAsync(user.Email, "KIDIO - Confirm Your Email", emailBody);
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, "KIDIO - Confirm Your Email", emailBody);
+            }
+            catch (AppException ex) when (ex.StatusCode == 503)
+            {
+                throw new AppException("Verification email could not be sent. Email service is not configured. Please contact the administrator.", 503);
+            }
         }
     }
 }

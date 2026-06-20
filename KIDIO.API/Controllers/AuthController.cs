@@ -107,6 +107,9 @@ namespace KIDIO.API.Controllers
 
             string htmlContent = await System.IO.File.ReadAllTextAsync(templatePath, ct);
 
+            var frontendUrl = _configuration["UrlSettings:FrontendUrl"] ?? "http://localhost:3000";
+            htmlContent = htmlContent.Replace("{{FrontendUrl}}", frontendUrl);
+
             if (string.IsNullOrWhiteSpace(token))
             {
                 htmlContent = htmlContent
@@ -215,16 +218,27 @@ namespace KIDIO.API.Controllers
         /// </summary>
         [HttpGet("me")]
         [Authorize]
-        public ActionResult<ApiResponse<object>> Me()
+        // [DESIGN FIX #1] Đổi từ object ẩn danh sang UserInfoDto để Swagger sinh schema chính xác
+        // và các client có thể deserialize đúng kiểu dữ liệu.
+        public ActionResult<ApiResponse<UserInfoDto>> Me()
         {
-            var claims = new
-            {
-                Id = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                Email = User.FindFirstValue(ClaimTypes.Email),
-                Name = User.FindFirstValue(ClaimTypes.Name),
-                Role = User.FindFirstValue(ClaimTypes.Role)
-            };
-            return Ok(ApiResponse<object>.Ok(claims));
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var name = User.FindFirstValue(ClaimTypes.Name);
+            var role = User.FindFirstValue(ClaimTypes.Role);
+
+            if (id is null || email is null || name is null || role is null)
+                throw new UnauthorizedAccessException("Invalid token claims.");
+
+            var userInfo = new UserInfoDto(
+                Id: Guid.Parse(id),
+                Email: email,
+                DisplayName: name,
+                AvatarUrl: null, // AvatarUrl không có trong JWT claims; client lấy từ AuthResponse lúc login
+                Role: role
+            );
+
+            return Ok(ApiResponse<UserInfoDto>.Ok(userInfo));
         }
 
         [HttpPost("change-password")]

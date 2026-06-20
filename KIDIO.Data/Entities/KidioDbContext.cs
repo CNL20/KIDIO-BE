@@ -69,8 +69,9 @@ namespace KIDIO.Data.Entities
                  .HasForeignKey(a => a.ChildId)
                  .OnDelete(DeleteBehavior.Cascade); // Nếu xóa tài khoản Đứa trẻ thì các huy chương của trẻ tự động xóa theo
 
-                // Nếu muốn, bạn có thể tạo một Index Unique để đảm bảo 1 đứa trẻ chỉ nhận 1 danh hiệu 1 lần duy nhất:
-                // e.HasIndex(a => new { a.ChildId, a.AchievementDefinitionId }).IsUnique();
+                // [FIX #4] Kích hoạt Unique Index để ngăn chặn race condition:
+                // Đảm bảo 1 đứa trẻ chỉ có thể nhận 1 huy hiệu cụ thể đúng 1 lần duy nhất.
+                e.HasIndex(a => new { a.ChildId, a.AchievementDefinitionId }).IsUnique();
             });
 
             // LessonProgress: unique (ChildId, LessonId)

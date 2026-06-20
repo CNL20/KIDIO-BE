@@ -36,28 +36,36 @@ public class ParentDashboardService : IParentDashboardService
         var publishedLessonsCount = await _uow.Lessons.Query()
             .CountAsync(l => l.IsPublished && !l.IsDeleted, ct);
 
-        var childProgresses = childIds.Count == 0
-            ? new List<KIDIO.Data.Entities.LessonProgress>()
+        // [DESIGN FIX #2] Thay vì load toàn bộ LessonProgress vào RAM rồi tính bằng LINQ in-memory,
+        // tính aggregate trực tiếp trên DB để giảm lượng dữ liệu truyền từ DB sang app server.
+        // Với nhiều trẻ học nhiều bài, cách cũ có thể load hàng nghìn bản ghi không cần thiết.
+        var childProgressStats = childIds.Count == 0
+            ? new List<(Guid ChildId, int CompletedLessons, int TotalStars, int TimeSpent)>()
             : await _uow.LessonProgresses.Query()
                 .Where(p => childIds.Contains(p.ChildId))
-                .ToListAsync(ct);
+                .GroupBy(p => p.ChildId)
+                .Select(g => new
+                {
+                    ChildId = g.Key,
+                    CompletedLessons = g.Count(p => p.IsCompleted),
+                    TimeSpent = g.Sum(p => p.TimeSpentSeconds)
+                })
+                .ToListAsync(ct)
+                .ContinueWith(t => t.Result
+                    .Select(x => (x.ChildId, x.CompletedLessons, 0, x.TimeSpent))
+                    .ToList(), ct);
 
-        var completedProgresses = childProgresses.Where(p => p.IsCompleted).ToList();
-        var totalCompletedLessons = completedProgresses.Count;
-        var totalTimeSpent = childProgresses.Sum(p => p.TimeSpentSeconds);
+        var progressLookup = childProgressStats.ToDictionary(x => x.ChildId);
+
+        var totalCompletedLessons = childProgressStats.Sum(x => x.CompletedLessons);
+        var totalTimeSpent = childProgressStats.Sum(x => x.TimeSpent);
         var totalStars = children.Sum(c => c.TotalStars);
-
-        var childProgressLookup = childProgresses
-            .GroupBy(p => p.ChildId)
-            .ToDictionary(g => g.Key, g => g.ToList());
 
         var childItems = children.Select(child =>
         {
-            childProgressLookup.TryGetValue(child.Id, out var progresses);
-            progresses ??= new List<KIDIO.Data.Entities.LessonProgress>();
-
-            var completedLessons = progresses.Count(p => p.IsCompleted);
-            var timeSpentSeconds = progresses.Sum(p => p.TimeSpentSeconds);
+            progressLookup.TryGetValue(child.Id, out var stats);
+            var completedLessons = stats.CompletedLessons;
+            var timeSpentSeconds = stats.TimeSpent;
             var completionPercent = publishedLessonsCount == 0
                 ? 0
                 : (int)Math.Round((double)completedLessons / publishedLessonsCount * 100);
@@ -75,6 +83,22 @@ public class ParentDashboardService : IParentDashboardService
                 LastLessonAt: child.LastLessonAt
             );
         }).ToList();
+
+        // Load progresses for weekly chart (chỉ lấy 3 cột cần thiết thay vì toàn bộ entity)
+        var childProgresses = childIds.Count == 0
+            ? new List<KIDIO.Data.Entities.LessonProgress>()
+            : await _uow.LessonProgresses.Query()
+                .Where(p => childIds.Contains(p.ChildId))
+                .Select(p => new KIDIO.Data.Entities.LessonProgress
+                {
+                    ChildId = p.ChildId,
+                    IsCompleted = p.IsCompleted,
+                    TimeSpentSeconds = p.TimeSpentSeconds,
+                    UpdatedAt = p.UpdatedAt,
+                    CompletedAt = p.CompletedAt,
+                    CreatedAt = p.CreatedAt
+                })
+                .ToListAsync(ct);
 
         var weeklyProgress = BuildWeeklyProgress(childProgresses, weeks);
 

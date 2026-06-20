@@ -1,6 +1,20 @@
+# Build folders
 bin/
 obj/
+publish/
+
+# IDE settings
 .vs/
+.vscode/
+.idea/
 *.user
 *.suo
+*.sln.docstates
+
+# Environment files and secrets
+.env
+.env.*
 **/appsettings.Development.json
+
+# OS files
+.DS_Store

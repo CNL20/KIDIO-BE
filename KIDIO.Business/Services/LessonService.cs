@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Lesson;
+using KIDIO.Business.DTOs.Lesson;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
@@ -143,8 +143,17 @@ public class LessonService : ILessonService
         _ = await _uow.Topics.GetByIdAsync(request.TopicId, ct)
             ?? throw new NotFoundException("Topic");
 
-if (await _uow.Lessons.Query().AnyAsync(l => l.TopicId == request.TopicId && l.Title.ToLower() == request.Title.ToLower().Trim(), ct))
+        // [FIX #8] Dùng IgnoreQueryFilters() và chỉ bắt lỗi nếu bản ghi đó chưa bị xóa.
+        // Trước đó, global filter ẩn soft-deleted records, nhưng do AnyAsync()
+        // chỉ thấy active records, admin vẫn không tạo được lesson trùng tên dù đã xóa bản ghi cũ.
+        var existingLesson = await _uow.Lessons.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(l => l.TopicId == request.TopicId &&
+                                      l.Title.ToLower() == request.Title.ToLower().Trim(), ct);
+
+        if (existingLesson != null && !existingLesson.IsDeleted)
             throw new AppException($"Lesson title '{request.Title}' already exists in this topic.");
+
         var lesson = new Lesson
         {
             Title = request.Title.Trim(),
@@ -175,7 +184,14 @@ if (await _uow.Lessons.Query().AnyAsync(l => l.TopicId == request.TopicId && l.T
         var lesson = await _uow.Lessons.GetByIdAsync(lessonId, ct)
             ?? throw new NotFoundException("Lesson");
 
-        if (await _uow.Lessons.Query().AnyAsync(l => l.TopicId == lesson.TopicId && l.Id != lessonId && l.Title.ToLower() == request.Title.ToLower().Trim(), ct))
+        // [FIX #8] Dùng IgnoreQueryFilters() và chỉ bảo vệ khi bản ghi cùng tên chưa bị xóa.
+        var existingLesson = await _uow.Lessons.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(l => l.TopicId == lesson.TopicId &&
+                                      l.Id != lessonId &&
+                                      l.Title.ToLower() == request.Title.ToLower().Trim(), ct);
+
+        if (existingLesson != null && !existingLesson.IsDeleted)
             throw new AppException($"Lesson title '{request.Title}' already exists in this topic.");
 
         lesson.Title = request.Title.Trim();
