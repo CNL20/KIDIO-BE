@@ -214,6 +214,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // =========================
+// CORS
+// =========================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// =========================
 // CONTROLLERS
 // =========================
 
@@ -264,6 +277,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// CORS phải đặt trước Authentication & Authorization
+app.UseCors("AllowAll");
 
 // 4. Auth — đúng thứ tự: Authentication trước, Authorization sau
 app.UseAuthentication();
