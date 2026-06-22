@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Child;
+using KIDIO.Business.DTOs.Child;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
@@ -157,8 +157,10 @@ public class ChildService : IChildService
 
     private static void ValidateAge(int age)
     {
-        if (age < 1 || age > 150)
-            throw new AppException("Please enter a valid age.");
+        // [FIX #5] Thu hẹp giới hạn tuổi từ 1-150 xuống 1-18 cho phù hợp mục đích giáo dục trẻ em.
+        // Frontend dùng giới hạn 4-10 cho UI; backend dùng 1-18 để làm safety net rộng hơn một chút.
+        if (age < 1 || age > 18)
+            throw new AppException("Age must be between 1 and 18.");
     }
 
     private static ChildSummaryResponse MapToSummary(Child c) => new(

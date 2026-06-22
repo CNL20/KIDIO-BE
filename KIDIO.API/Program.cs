@@ -14,6 +14,39 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.IO;
+using System;
+
+// ==========================================
+// LOAD ENV VARIABLES FROM .ENV FOR LOCAL DEV
+// ==========================================
+var envPaths = new[] {
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "KIDIO.API", ".env")
+};
+foreach (var path in envPaths)
+{
+    if (File.Exists(path))
+    {
+        foreach (var line in File.ReadAllLines(path))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.Trim().StartsWith("#")) continue;
+            var parts = line.Split('=', 2);
+            if (parts.Length == 2)
+            {
+                var key = parts[0].Trim();
+                var val = parts[1].Trim();
+                if ((val.StartsWith("\"") && val.EndsWith("\"")) || (val.StartsWith("'") && val.EndsWith("'")))
+                {
+                    val = val.Substring(1, val.Length - 2);
+                }
+                Environment.SetEnvironmentVariable(key, val);
+            }
+        }
+        break; // Only load first found .env
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +57,22 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration
     .GetSection("JwtSettings")
     .Get<JwtSettings>()!;
+
+// =========================
+// STARTUP CONFIG VALIDATION
+// =========================
+// Fail fast ngay lúc khởi động nếu thiếu cấu hình bắt buộc.
+// Trước đây, JwtSettings:SecretKey để rỗng sẽ gây lỗi bí ẩn IDX10703 khi có request đầu tiên.
+if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey))
+    throw new InvalidOperationException(
+        "[KIDIO Startup] JwtSettings:SecretKey is not configured. " +
+        "Please set it via 'dotnet user-secrets set JwtSettings:SecretKey <your-secret>' " +
+        "or in appsettings.Development.json. Key must be at least 32 characters.");
+
+if (jwtSettings.SecretKey.Length < 32)
+    throw new InvalidOperationException(
+        $"[KIDIO Startup] JwtSettings:SecretKey is too short ({jwtSettings.SecretKey.Length} chars). " +
+        "Minimum 32 characters required for HS256.");
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
@@ -167,20 +216,31 @@ builder.Services.AddSwaggerGen(c =>
 // =========================
 // CORS
 // =========================
+const string CorsPolicyName = "FrontendCors";
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? new[]
+    {
+        "http://localhost:5173",
+        "http://localhost:8080"
+    };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy(CorsPolicyName, policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
 // =========================
 // CONTROLLERS
 // =========================
-
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
@@ -197,27 +257,42 @@ var app = builder.Build();
 // 1. Bắt exception toàn app — phải đứng đầu
 app.UseMiddleware<ExceptionMiddleware>();
 
-// 2. HTTPS redirect
-app.UseHttpsRedirection();
+// 2. HTTPS redirect (Only redirect in local development; Render terminates SSL at the proxy layer)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 // Serve cached/generated TTS audio
 app.UseStaticFiles();
 
-// 3. Dev tools
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<KidioDbContext>();
-    await db.Database.MigrateAsync();
-    // Seed demo data (topics, lessons, vocabularies)
-    await SeedData.EnsureSeedDataAsync(db);
+// CORS phải đặt trước Authentication & Authorization
+app.UseCors(CorsPolicyName);
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
+// 3. Database Migrations & Seeding (Run for all environments to ensure Render DB is ready)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<KidioDbContext>();
+        await db.Database.MigrateAsync();
+        // Seed demo data (topics, lessons, vocabularies)
+        await SeedData.EnsureSeedDataAsync(db);
+        Console.WriteLine("[KIDIO Startup] Database migrations and seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[KIDIO Startup] Error running database migrations/seeding: {ex.Message}");
+    }
 }
 
-// CORS phải đặt trước Authentication & Authorization
-app.UseCors("AllowAll");
+// 4. Swagger UI (Always enabled for development and Render testing/grading convenience)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "KIDIO API v1");
+    c.RoutePrefix = "swagger";
+});
 
 // 4. Auth — đúng thứ tự: Authentication trước, Authorization sau
 app.UseAuthentication();

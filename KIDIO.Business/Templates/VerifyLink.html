@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -44,8 +44,11 @@
 <body>
     <div class="card">
         {{StatusContent}}
-        <p>Please click the button below to return to the KIDIO app and log in:</p>
-        <a href='kidio://app' class='btn'>OPEN THE KIDIO APP</a>
+        <p>Please choose where you want to return and log in:</p>
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center;">
+            <a href='kidio://app' class='btn' style='background-color: #007bff; margin: 0;'>OPEN IN MOBILE APP</a>
+            <a href='{{FrontendUrl}}' class='btn' style='background-color: #28a745; margin: 0;'>OPEN IN WEB BROWSER</a>
+        </div>
     </div>
 </body>
 </html>

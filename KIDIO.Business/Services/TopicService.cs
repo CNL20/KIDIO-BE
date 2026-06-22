@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Lesson;
+using KIDIO.Business.DTOs.Lesson;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
@@ -64,12 +64,17 @@ public class TopicService : ITopicService
     public async Task<TopicResponse> CreateTopicAsync(
         CreateTopicRequest request, CancellationToken ct = default)
     {
-        // Kiểm tra tên trùng
-        var exists = await _uow.Topics.FirstOrDefaultAsync(
-            t => t.Name.ToLower() == request.Name.ToLower(), ct);
+        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records,
+        // ngăn tạo topic trùng tên với topic đã bị xóa mềm.
+        var exists = await _uow.Topics.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Name.ToLower() == request.Name.ToLower(), ct);
 
-        if (exists is not null)
+        if (exists is not null && !exists.IsDeleted)
             throw new AppException("A topic with this name already exists.");
+
+        if (exists is not null && exists.IsDeleted)
+            throw new AppException("A topic with this name was previously deleted. Please restore it or use a different name.");
 
         // Kiểm tra OrderIndex trùng
         var orderIndexExists = await _uow.Topics.FirstOrDefaultAsync(
@@ -101,12 +106,16 @@ public class TopicService : ITopicService
             .FirstOrDefaultAsync(t => t.Id == topicId, ct)
             ?? throw new NotFoundException("Topic");
 
-        // Kiểm tra tên trùng với topic khác
-        var duplicate = await _uow.Topics.FirstOrDefaultAsync(
-            t => t.Name.ToLower() == request.Name.ToLower() && t.Id != topicId, ct);
+        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records khi kiểm tra trùng tên
+        var duplicate = await _uow.Topics.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Name.ToLower() == request.Name.ToLower() && t.Id != topicId, ct);
 
-        if (duplicate is not null)
+        if (duplicate is not null && !duplicate.IsDeleted)
             throw new AppException("A topic with this name already exists.");
+
+        if (duplicate is not null && duplicate.IsDeleted)
+            throw new AppException("A previously deleted topic has this name. Please use a different name.");
 
         // Kiểm tra OrderIndex trùng với topic khác
         var orderIndexDuplicate = await _uow.Topics.FirstOrDefaultAsync(

@@ -36,25 +36,13 @@ public class PronunciationController : ControllerBase
         [FromForm] SubmitPronunciationRequest request,
         CancellationToken ct)
     {
-        try
-        {
-            var result = await _pronunciationService.SubmitPronunciationAsync(
-                request.ChildId,
-                request,
-                ct);
+        // ExceptionMiddleware xử lý AppException, NotFoundException, v.v. — không cần try/catch thủ công
+        var result = await _pronunciationService.SubmitPronunciationAsync(
+            request.ChildId,
+            request,
+            ct);
 
-            return Ok(ApiResponse<PronunciationScoreResponse>.Ok(result, "Pronunciation scored successfully."));
-        }
-        catch (AppException ex)
-        {
-            _logger.LogWarning(ex, "Pronunciation scoring validation error");
-            return BadRequest(ApiResponse<PronunciationScoreResponse>.Fail(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error scoring pronunciation");
-            return StatusCode(500, ApiResponse<PronunciationScoreResponse>.Fail("Internal server error while scoring pronunciation."));
-        }
+        return Ok(ApiResponse<PronunciationScoreResponse>.Ok(result, "Pronunciation scored successfully."));
     }
 
     /// <summary>
@@ -65,24 +53,12 @@ public class PronunciationController : ControllerBase
         Guid vocabularyId,
         CancellationToken ct)
     {
-        try
-        {
-            var result = await _pronunciationService.GetVocabularyHistoryAsync(
-                GetCurrentUserId(),
-                vocabularyId,
-                ct);
+        var result = await _pronunciationService.GetVocabularyHistoryAsync(
+            GetCurrentUserId(),
+            vocabularyId,
+            ct);
 
-            return Ok(ApiResponse<PronunciationHistoryResponse>.Ok(result));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ApiResponse<PronunciationHistoryResponse>.Fail(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error getting pronunciation history for vocabulary {vocabularyId}");
-            return StatusCode(500, ApiResponse<PronunciationHistoryResponse>.Fail("Internal server error."));
-        }
+        return Ok(ApiResponse<PronunciationHistoryResponse>.Ok(result));
     }
 
     /// <summary>
@@ -94,21 +70,13 @@ public class PronunciationController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
-        try
-        {
-            var result = await _pronunciationService.GetChildHistoryPagedAsync(
-                GetCurrentUserId(),
-                pageNumber,
-                pageSize,
-                ct);
+        var result = await _pronunciationService.GetChildHistoryPagedAsync(
+            GetCurrentUserId(),
+            pageNumber,
+            pageSize,
+            ct);
 
-            return Ok(ApiResponse<PagedPronunciationResponse>.Ok(result));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting pronunciation history");
-            return StatusCode(500, ApiResponse<PagedPronunciationResponse>.Fail("Internal server error."));
-        }
+        return Ok(ApiResponse<PagedPronunciationResponse>.Ok(result));
     }
 
     // ─── Helper ────────────────────────────────────────────

@@ -310,17 +310,19 @@ public class AchievementService : IAchievementService
         if (definition == null)
             return false;
 
-        // KIỂM TRA: Dựa trực tiếp vào FK mới để tìm xem đứa trẻ nào đã giữ định nghĩa này chưa
+        // Kiểm tra: Dựa trực tiếp vào FK mới để tìm xem đứa trẻ nào đã giữ định nghĩa này chưa
         var referencedAchievements = await _uow.Achievements.Query()
             .AnyAsync(a => a.AchievementDefinitionId == id, ct);
 
         if (referencedAchievements)
             throw new AppException("Cannot hard delete achievement definition that has been earned by children.");
 
-        _uow.AchievementDefinitions.Query()
+        // [FIX #3] Dùng ExecuteDeleteAsync với await để đảm bảo lệnh xóa thực sự chạy và được chờ kết quả.
+        // Trước đó ExecuteDelete() không có await nên lệnh xóa có thể không chạy mà vẫn trả true.
+        await _uow.AchievementDefinitions.Query()
             .IgnoreQueryFilters()
             .Where(d => d.Id == id)
-            .ExecuteDelete();
+            .ExecuteDeleteAsync(ct);
 
         return true;
     }

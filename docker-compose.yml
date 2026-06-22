@@ -2,29 +2,42 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16
     container_name: kidio-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345
+      POSTGRES_PASSWORD: "12345"
       POSTGRES_DB: KidioDB
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    restart: always
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: kidio-api
+    ports:
+      - "5109:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=KidioDB;Username=postgres;Password=12345;
+      - JwtSettings__SecretKey=${JwtSettings__SecretKey}
+      - JwtSettings__Issuer=${JwtSettings__Issuer:-KIDIO}
+      - JwtSettings__Audience=${JwtSettings__Audience:-KIDIO-Client}
+      - GoogleOAuth__ClientId=${GoogleOAuth__ClientId}
+      - GoogleOAuth__ClientSecret=${GoogleOAuth__ClientSecret}
+      - AzureSpeech__AzureSpeechKey=${AzureSpeech__AzureSpeechKey}
+      - AzureSpeech__AzureSpeechRegion=${AzureSpeech__AzureSpeechRegion:-southeastasia}
+      - EmailSettings__SenderEmail=${EmailSettings__SenderEmail}
+      - EmailSettings__ApiKey=${EmailSettings__ApiKey}
+      - UrlSettings__FrontendUrl=${UrlSettings__FrontendUrl:-http://localhost:3000}
+      - UrlSettings__BackendUrl=${UrlSettings__BackendUrl:-http://localhost:5109}
     depends_on:
       - db
-    ports:
-      - "8080:8080"
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Database=KidioDB;Username=postgres;Password=12345
-      - ASPNETCORE_ENVIRONMENT=Development
+    restart: always
 
 volumes:
-  postgres_data:
+  pgdata:

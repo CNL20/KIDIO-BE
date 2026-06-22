@@ -28,20 +28,10 @@ public class ParentDashboardController : ControllerBase
         [FromQuery] int weeks = 4,
         CancellationToken ct = default)
     {
-        try
-        {
-            var result = await _dashboardService.GetOverviewAsync(GetCurrentUserId(), weeks, ct);
-            return Ok(ApiResponse<ParentDashboardOverviewResponse>.Ok(result));
-        }
-        catch (AppException ex)
-        {
-            return BadRequest(ApiResponse<ParentDashboardOverviewResponse>.Fail(ex.Message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading parent dashboard overview");
-            return StatusCode(500, ApiResponse<ParentDashboardOverviewResponse>.Fail("Internal server error."));
-        }
+        // ExceptionMiddleware xử lý tất cả exception loại — không cần try/catch thủ công ở đây.
+        // Trước đây catch (AppException) → BadRequest(400) sẽ nuốt mất NotFoundException(404).
+        var result = await _dashboardService.GetOverviewAsync(GetCurrentUserId(), weeks, ct);
+        return Ok(ApiResponse<ParentDashboardOverviewResponse>.Ok(result));
     }
 
     private Guid GetCurrentUserId()
