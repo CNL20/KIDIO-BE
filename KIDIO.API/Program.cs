@@ -223,7 +223,6 @@ var allowedOrigins = builder.Configuration
     .Get<string[]>()
     ?? new[]
     {
-        "https://manga-production-platform-fe.vercel.app",
         "http://localhost:5173",
         "http://localhost:8080"
     };
