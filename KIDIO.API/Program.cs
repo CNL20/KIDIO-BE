@@ -216,33 +216,34 @@ builder.Services.AddSwaggerGen(c =>
 // =========================
 // CORS
 // =========================
+const string CorsPolicyName = "FrontendCors";
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? new[]
+    {
+        "https://manga-production-platform-fe.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:8080"
+    };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy(CorsPolicyName, policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
 // =========================
 // CONTROLLERS
 // =========================
-
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
-
-// Enable CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
 
 // =========================
 // BUILD APP
@@ -257,29 +258,42 @@ var app = builder.Build();
 // 1. Bắt exception toàn app — phải đứng đầu
 app.UseMiddleware<ExceptionMiddleware>();
 
-// 2. HTTPS redirect
-app.UseHttpsRedirection();
+// 2. HTTPS redirect (Only redirect in local development; Render terminates SSL at the proxy layer)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 // Serve cached/generated TTS audio
 app.UseStaticFiles();
 
-app.UseCors("AllowAll");
+// CORS phải đặt trước Authentication & Authorization
+app.UseCors(CorsPolicyName);
 
-// 3. Dev tools
-if (app.Environment.IsDevelopment())
+// 3. Database Migrations & Seeding (Run for all environments to ensure Render DB is ready)
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<KidioDbContext>();
-    await db.Database.MigrateAsync();
-    // Seed demo data (topics, lessons, vocabularies)
-    await SeedData.EnsureSeedDataAsync(db);
-
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<KidioDbContext>();
+        await db.Database.MigrateAsync();
+        // Seed demo data (topics, lessons, vocabularies)
+        await SeedData.EnsureSeedDataAsync(db);
+        Console.WriteLine("[KIDIO Startup] Database migrations and seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[KIDIO Startup] Error running database migrations/seeding: {ex.Message}");
+    }
 }
 
-// CORS phải đặt trước Authentication & Authorization
-app.UseCors("AllowAll");
+// 4. Swagger UI (Always enabled for development and Render testing/grading convenience)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "KIDIO API v1");
+    c.RoutePrefix = "swagger";
+});
 
 // 4. Auth — đúng thứ tự: Authentication trước, Authorization sau
 app.UseAuthentication();

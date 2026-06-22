@@ -13,7 +13,7 @@ Hệ thống cung cấp cơ sở dữ liệu để lưu trữ tiến trình họ
 
 ## Công nghệ sử dụng
 - **Ngôn ngữ & Framework**: C# / ASP.NET Core 8.0 (`.NET 8`).
-- **Cơ sở dữ liệu**: Microsoft SQL Server thông qua Entity Framework Core (EF Core).
+- **Cơ sở dữ liệu**: PostgreSQL thông qua Entity Framework Core (EF Core).
 - **Kiến trúc**: Layered Architecture (API -> Business -> Data).
 - **Xác thực (Authentication)**:
   - JWT (JSON Web Token) với cấu hình Access Token & Refresh Token.
