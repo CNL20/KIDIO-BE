@@ -290,6 +290,32 @@ namespace KIDIO.Data.Seed
                 }
             }
 
+            // Seed AchievementDefinitions
+            var seedAchievements = new[]
+            {
+                new AchievementDefinition { Type = "Lessons", Threshold = 1, Name = "Bài Học Đầu Tiên", Description = "Hoàn thành bài học đầu tiên", BadgeUrl = "first_lesson", OrderIndex = 1, IsActive = true },
+                new AchievementDefinition { Type = "Lessons", Threshold = 10, Name = "Hoàn Thành 10 Bài", Description = "Hoàn thành 10 bài học", BadgeUrl = "10_lessons", OrderIndex = 2, IsActive = true },
+                new AchievementDefinition { Type = "Stars", Threshold = 100, Name = "Đạt 100 Sao", Description = "Tích lũy được 100 sao học tập", BadgeUrl = "100_stars", OrderIndex = 3, IsActive = true },
+                new AchievementDefinition { Type = "Streak", Threshold = 7, Name = "Chăm Chỉ 7 Ngày", Description = "Duy trì streak học tập trong 7 ngày liên tiếp", BadgeUrl = "7_streak", OrderIndex = 4, IsActive = true },
+                new AchievementDefinition { Type = "Words", Threshold = 10, Name = "Bậc Thầy Phát Âm", Description = "Phát âm chính xác 10 từ vựng", BadgeUrl = "pron_master", OrderIndex = 5, IsActive = true },
+                new AchievementDefinition { Type = "Lessons", Threshold = 5, Name = "Nhà Vô Địch Quiz", Description = "Hoàn thành 5 bài Quiz/học", BadgeUrl = "quiz_champ", OrderIndex = 6, IsActive = true },
+                new AchievementDefinition { Type = "Lessons", Threshold = 8, Name = "Nhà Thám Hiểm", Description = "Mở khóa tất cả chủ đề", BadgeUrl = "explorer", OrderIndex = 7, IsActive = true },
+                new AchievementDefinition { Type = "Lessons", Threshold = 15, Name = "Dũng Sĩ Diệt Boss", Description = "Vượt qua Boss Battle", BadgeUrl = "boss_slayer", OrderIndex = 8, IsActive = true }
+            };
+
+            foreach (var sa in seedAchievements)
+            {
+                var exists = await db.AchievementDefinitions
+                    .IgnoreQueryFilters()
+                    .AnyAsync(ad => ad.Name == sa.Name);
+
+                if (!exists)
+                {
+                    await db.AchievementDefinitions.AddAsync(sa);
+                    changed = true;
+                }
+            }
+
             if (changed)
             {
                 await db.SaveChangesAsync();

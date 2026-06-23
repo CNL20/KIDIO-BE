@@ -150,6 +150,24 @@ public class AchievementService : IAchievementService
 
     // =============== Admin methods for managing achievement definitions ===============
 
+    public async Task<List<AchievementDefinitionResponse>> GetActiveDefinitionsAsync(CancellationToken ct = default)
+    {
+        return await _uow.AchievementDefinitions.Query()
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.OrderIndex)
+            .Select(d => new AchievementDefinitionResponse(
+                d.Id,
+                d.Type,
+                d.Threshold,
+                d.Name,
+                d.Description,
+                d.BadgeUrl,
+                d.OrderIndex,
+                d.IsActive
+            ))
+            .ToListAsync(ct);
+    }
+
     public async Task<List<AchievementDefinitionResponse>> GetAllDefinitionsAsync(CancellationToken ct = default)
     {
         return await _uow.AchievementDefinitions.Query()

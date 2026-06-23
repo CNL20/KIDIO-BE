@@ -1,4 +1,4 @@
-﻿using KIDIO.Common;
+using KIDIO.Common;
 using KIDIO.Business.DTOs.Achievement;
 
 namespace KIDIO.Business.Interfaces;
@@ -10,6 +10,7 @@ public interface IAchievementService
     Task<AchievementUnlockResult> CheckAndUnlockAsync(Guid childId, CancellationToken ct = default);
 
     // Admin methods for managing achievement definitions
+    Task<List<AchievementDefinitionResponse>> GetActiveDefinitionsAsync(CancellationToken ct = default);
     Task<List<AchievementDefinitionResponse>> GetAllDefinitionsAsync(CancellationToken ct = default);
     Task<PagedResponse<AchievementDefinitionResponse>> GetAllDefinitionsPagedAsync(int pageNumber = 1, int pageSize = 10, CancellationToken ct = default);
     Task<AchievementDefinitionResponse?> GetDefinitionByIdAsync(Guid id, CancellationToken ct = default);

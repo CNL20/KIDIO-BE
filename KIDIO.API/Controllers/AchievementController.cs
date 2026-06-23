@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.DTOs.Achievement;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +33,17 @@ public class AchievementController : ControllerBase
             childId, GetCurrentUserId(), pageNumber, pageSize, ct);
 
         return Ok(ApiResponse<PagedResponse<AchievementResponse>>.Ok(result));
+    }
+
+    /// <summary>
+    /// Lấy tất cả các định nghĩa huy hiệu đang hoạt động (dành cho client hiển thị danh sách huy hiệu)
+    /// </summary>
+    [HttpGet("active-definitions")]
+    public async Task<ActionResult<ApiResponse<List<AchievementDefinitionResponse>>>> GetActiveDefinitions(
+        CancellationToken ct = default)
+    {
+        var result = await _achievementService.GetActiveDefinitionsAsync(ct);
+        return Ok(ApiResponse<List<AchievementDefinitionResponse>>.Ok(result));
     }
 
     /// <summary>
