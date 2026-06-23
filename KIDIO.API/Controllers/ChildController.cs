@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Child;
+using KIDIO.Business.DTOs.Child;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -80,6 +80,21 @@ public class ChildController : ControllerBase
     {
         await _childService.HardDeleteChildAsync(childId, ct);
         return Ok(ApiResponse<object>.Ok(new(), "Child profile permanently deleted."));
+    }
+
+    /// <summary>
+    /// Cộng thêm Stars vào hồ sơ của Child (dùng cho Quest reward, bonus, v.v.)
+    /// </summary>
+    [HttpPost("{childId:guid}/add-stars")]
+    public async Task<ActionResult<ApiResponse<AddStarsResponse>>> AddStars(
+        Guid childId,
+        [FromBody] AddStarsRequest request,
+        CancellationToken ct)
+    {
+        var result = await _childService.AddStarsAsync(
+            childId, GetCurrentUserId(), request, ct);
+
+        return Ok(ApiResponse<AddStarsResponse>.Ok(result, "Stars added successfully."));
     }
 
     // ── Helper ──────────────────────────────────────────────
