@@ -1,4 +1,4 @@
-﻿namespace KIDIO.Business.DTOs.Child;
+namespace KIDIO.Business.DTOs.Child;
 
 public record CreateChildRequest(
     string Name,
@@ -31,4 +31,16 @@ public record ChildSummaryResponse(
     string? AvatarUrl,
     int TotalStars,
     int CurrentStreakDays
+);
+
+public record AddStarsRequest(
+    int Stars,
+    string Reason
+);
+
+public record AddStarsResponse(
+    Guid ChildId,
+    string ChildName,
+    int StarsAdded,
+    int TotalStars
 );

@@ -141,6 +141,29 @@ public class ChildService : IChildService
         await _uow.SaveChangesAsync(ct);
     }
 
+    public async Task<AddStarsResponse> AddStarsAsync(Guid childId, Guid parentId, AddStarsRequest request, CancellationToken ct = default)
+    {
+        var child = await _uow.Children.GetByIdAsync(childId, ct)
+            ?? throw new NotFoundException("Child");
+
+        if (child.ParentId != parentId)
+            throw new ForbiddenException("You do not have permission to modify this child's stars.");
+
+        if (request.Stars <= 0)
+            throw new AppException("Stars to add must be greater than zero.");
+
+        child.TotalStars += request.Stars;
+        _uow.Children.Update(child);
+        await _uow.SaveChangesAsync(ct);
+
+        return new AddStarsResponse(
+            ChildId:    child.Id,
+            ChildName:  child.Name,
+            StarsAdded: request.Stars,
+            TotalStars: child.TotalStars
+        );
+    }
+
     // ── Helpers ─────────────────────────────────────────────
 
     private async Task<Child> GetAndVerifyOwnershipAsync(

@@ -1,4 +1,4 @@
-﻿using KIDIO.Common;
+using KIDIO.Common;
 using KIDIO.Business.DTOs.Child;
 
 namespace KIDIO.Business.Interfaces;
@@ -13,4 +13,5 @@ public interface IChildService
     Task DeleteChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
     Task RestoreChildAsync(Guid childId, Guid parentId, CancellationToken ct = default);
     Task HardDeleteChildAsync(Guid childId, CancellationToken ct = default);
+    Task<AddStarsResponse> AddStarsAsync(Guid childId, Guid parentId, AddStarsRequest request, CancellationToken ct = default);
 }
