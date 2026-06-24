@@ -442,7 +442,11 @@ namespace KIDIO.Business.Services
             }
             catch (AppException ex) when (ex.StatusCode == 503)
             {
-                throw new AppException("Verification email could not be sent. Email service is not configured. Please contact the administrator.", 503);
+                if (ex.Message.Contains("not configured"))
+                {
+                    throw new AppException("Verification email could not be sent. Email service is not configured. Please contact the administrator.", 503);
+                }
+                throw;
             }
         }
     }

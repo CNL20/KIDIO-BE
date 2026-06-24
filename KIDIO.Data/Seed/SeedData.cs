@@ -26,26 +26,26 @@ namespace KIDIO.Data.Seed
                         new
                         {
                             Title = "Farm Animals",
-                            Description = "Cow, sheep, pig",
+                            Description = "Cow, sheep, pig, horse",
                             Type = LessonType.Story,
                             Difficulty = DifficultyLevel.Beginner,
                             SkillFocus = SkillType.Listening,
                             DurationSeconds = 180,
                             OrderIndex = 1,
-                            ContentJson = P("The cow says moo. The sheep says baa. The pig says oink."),
-                            Vocabularies = new[] { ("Cow", "Bò", "kaʊ"), ("Sheep", "Cừu", "ʃiːp"), ("Pig", "Lợn", "pɪg") }
+                            ContentJson = P("The cow says moo. The sheep says baa. The pig says oink. The horse runs fast."),
+                            Vocabularies = new[] { ("Cow", "Bò", "kaʊ"), ("Sheep", "Cừu", "ʃiːp"), ("Pig", "Lợn", "pɪg"), ("Horse", "Ngựa", "hɔːrs") }
                         },
                         new
                         {
                             Title = "Jungle Animals",
-                            Description = "Tiger, monkey, elephant",
+                            Description = "Tiger, monkey, elephant, lion",
                             Type = LessonType.Dialogue,
                             Difficulty = DifficultyLevel.Elementary,
                             SkillFocus = SkillType.Vocabulary,
                             DurationSeconds = 210,
                             OrderIndex = 2,
-                            ContentJson = P("Listen to the tiger roar and the monkey chatter."),
-                            Vocabularies = new[] { ("Tiger", "Hổ", "ˈtaɪɡər"), ("Monkey", "Khỉ", "ˈmʌŋki"), ("Elephant", "Voi", "ˈɛlɪfənt") }
+                            ContentJson = P("Listen to the tiger roar and the monkey chatter. The lion is king."),
+                            Vocabularies = new[] { ("Tiger", "Hổ", "ˈtaɪɡər"), ("Monkey", "Khỉ", "ˈmʌŋki"), ("Elephant", "Voi", "ˈɛlɪfənt"), ("Lion", "Sư tử", "ˈlaɪən") }
                         }
                     }
                 },
@@ -65,7 +65,7 @@ namespace KIDIO.Data.Seed
                             DurationSeconds = 120,
                             OrderIndex = 1,
                             ContentJson = P("Red, blue, green, yellow."),
-                            Vocabularies = new[] { ("Red", "Đỏ", "rɛd"), ("Blue", "Xanh dương", "bluː"), ("Green", "Xanh lá", "griːn") }
+                            Vocabularies = new[] { ("Red", "Đỏ", "rɛd"), ("Blue", "Xanh dương", "bluː"), ("Green", "Xanh lá", "griːn"), ("Yellow", "Vàng", "ˈjɛloʊ") }
                         }
                     }
                 },
@@ -85,7 +85,7 @@ namespace KIDIO.Data.Seed
                             DurationSeconds = 150,
                             OrderIndex = 1,
                             ContentJson = P("Apple, banana, orange, mango."),
-                            Vocabularies = new[] { ("Apple", "Táo", "ˈæpəl"), ("Banana", "Chuối", "bəˈnænə"), ("Orange", "Cam", "ˈɒrɪndʒ") }
+                            Vocabularies = new[] { ("Apple", "Táo", "ˈæpəl"), ("Banana", "Chuối", "bəˈnænə"), ("Orange", "Cam", "ˈɒrɪndʒ"), ("Mango", "Xoài", "ˈmæŋɡoʊ") }
                         },
                         new
                         {
@@ -97,7 +97,7 @@ namespace KIDIO.Data.Seed
                             DurationSeconds = 160,
                             OrderIndex = 2,
                             ContentJson = P("Carrot, potato, tomato, cucumber."),
-                            Vocabularies = new[] { ("Carrot", "Cà rốt", "ˈkærət"), ("Potato", "Khoai tây", "pəˈteɪtoʊ"), ("Tomato", "Cà chua", "təˈmeɪtoʊ") }
+                            Vocabularies = new[] { ("Carrot", "Cà rốt", "ˈkærət"), ("Potato", "Khoai tây", "pəˈteɪtoʊ"), ("Tomato", "Cà chua", "təˈmeɪtoʊ"), ("Cucumber", "Dưa chuột", "ˈkjuːkʌmbər") }
                         }
                     }
                 },
@@ -110,14 +110,14 @@ namespace KIDIO.Data.Seed
                         new
                         {
                             Title = "Transport 1",
-                            Description = "Car, bus, bike",
+                            Description = "Car, bus, bike, motorcycle",
                             Type = LessonType.Story,
                             Difficulty = DifficultyLevel.Beginner,
                             SkillFocus = SkillType.Listening,
                             DurationSeconds = 140,
                             OrderIndex = 1,
-                            ContentJson = P("I go to school by bus. My dad drives a car."),
-                            Vocabularies = new[] { ("Car", "Xe hơi", "kɑːr"), ("Bus", "Xe buýt", "bʌs"), ("Bicycle", "Xe đạp", "ˈbaɪsɪkəl") }
+                            ContentJson = P("I go to school by bus. My dad drives a car. I ride a bicycle. He rides a motorcycle."),
+                            Vocabularies = new[] { ("Car", "Xe hơi", "kɑːr"), ("Bus", "Xe buýt", "bʌs"), ("Bicycle", "Xe đạp", "ˈbaɪsɪkəl"), ("Motorcycle", "Xe máy", "ˈmoʊtərˌsaɪkəl") }
                         }
                     }
                 },
@@ -130,14 +130,14 @@ namespace KIDIO.Data.Seed
                         new
                         {
                             Title = "Family Members",
-                            Description = "Mother, father, sister",
+                            Description = "Mother, father, brother, sister",
                             Type = LessonType.Dialogue,
                             Difficulty = DifficultyLevel.Beginner,
                             SkillFocus = SkillType.Speaking,
                             DurationSeconds = 130,
                             OrderIndex = 1,
-                            ContentJson = P("My mother is kind. My brother likes to play."),
-                            Vocabularies = new[] { ("Mother", "Mẹ", "ˈmʌðər"), ("Father", "Cha", "ˈfɑːðər"), ("Brother", "Anh/em trai", "ˈbrʌðər") }
+                            ContentJson = P("My mother is kind. My brother likes to play. My sister is cute."),
+                            Vocabularies = new[] { ("Mother", "Mẹ", "ˈmʌðər"), ("Father", "Cha", "ˈfɑːðər"), ("Brother", "Anh/em trai", "ˈbrʌðər"), ("Sister", "Chị/em gái", "ˈsɪstər") }
                         }
                     }
                 },
@@ -157,7 +157,7 @@ namespace KIDIO.Data.Seed
                             DurationSeconds = 100,
                             OrderIndex = 1,
                             ContentJson = P("One, two, three, four, five, six, seven, eight, nine, ten."),
-                            Vocabularies = new[] { ("One", "Một", "wʌn"), ("Two", "Hai", "tuː"), ("Three", "Ba", "θriː") }
+                            Vocabularies = new[] { ("One", "Một", "wʌn"), ("Two", "Hai", "tuː"), ("Three", "Ba", "θriː"), ("Four", "Bốn", "fɔːr") }
                         }
                     }
                 },
@@ -177,7 +177,7 @@ namespace KIDIO.Data.Seed
                             DurationSeconds = 90,
                             OrderIndex = 1,
                             ContentJson = P("Circle, square, triangle, rectangle."),
-                            Vocabularies = new[] { ("Circle", "Hình tròn", "ˈsɜːrkəl"), ("Square", "Hình vuông", "skwɛər"), ("Triangle", "Hình tam giác", "ˈtraɪæŋɡəl") }
+                            Vocabularies = new[] { ("Circle", "Hình tròn", "ˈsɜːrkəl"), ("Square", "Hình vuông", "skwɛər"), ("Triangle", "Hình tam giác", "ˈtraɪæŋɡəl"), ("Rectangle", "Hình chữ nhật", "ˈrɛkˌtæŋɡəl") }
                         }
                     }
                 },
@@ -196,8 +196,8 @@ namespace KIDIO.Data.Seed
                             SkillFocus = SkillType.Listening,
                             DurationSeconds = 110,
                             OrderIndex = 1,
-                            ContentJson = P("It is sunny today. It might rain tomorrow."),
-                            Vocabularies = new[] { ("Sunny", "Nắng", "ˈsʌni"), ("Rainy", "Mưa", "ˈreɪni"), ("Windy", "Có gió", "ˈwɪndi") }
+                            ContentJson = P("It is sunny today. It might rain tomorrow. It is cloudy."),
+                            Vocabularies = new[] { ("Sunny", "Nắng", "ˈsʌni"), ("Rainy", "Mưa", "ˈreɪni"), ("Windy", "Có gió", "ˈwɪndi"), ("Cloudy", "Nhiều mây", "ˈklaʊdi") }
                         }
                     }
                 },
@@ -210,28 +210,25 @@ namespace KIDIO.Data.Seed
                         new
                         {
                             Title = "At School",
-                            Description = "Teacher, desk, book",
+                            Description = "Teacher, desk, book, pencil",
                             Type = LessonType.Dialogue,
                             Difficulty = DifficultyLevel.Elementary,
                             SkillFocus = SkillType.Speaking,
                             DurationSeconds = 140,
                             OrderIndex = 1,
-                            ContentJson = P("The teacher opens the book. We sit at our desks."),
-                            Vocabularies = new[] { ("Teacher", "Giáo viên", "ˈtiːtʃər"), ("Book", "Sách", "bʊk"), ("Desk", "Bàn học", "dɛsk") }
+                            ContentJson = P("The teacher opens the book. We sit at our desks. I have a pencil."),
+                            Vocabularies = new[] { ("Teacher", "Giáo viên", "ˈtiːtʃər"), ("Book", "Sách", "bʊk"), ("Desk", "Bàn học", "dɛsk"), ("Pencil", "Bút chì", "ˈpɛnsəl") }
                         }
                     }
                 }
             };
 
             var nextTopicOrder = (await db.Topics.IgnoreQueryFilters().MaxAsync(t => (int?)t.OrderIndex) ?? 0) + 1;
-            var changed = false;
 
             foreach (var seedTopic in seedTopics)
             {
                 var topic = await db.Topics
                     .IgnoreQueryFilters()
-                    .Include(t => t.Lessons)
-                    .ThenInclude(l => l.Vocabularies)
                     .FirstOrDefaultAsync(t => t.Name == seedTopic.Name);
 
                 if (topic == null)
@@ -241,17 +238,19 @@ namespace KIDIO.Data.Seed
                         Name = seedTopic.Name,
                         Description = seedTopic.Description,
                         OrderIndex = nextTopicOrder++,
-                        IsActive = true,
-                        Lessons = new List<Lesson>()
+                        IsActive = true
                     };
 
                     await db.Topics.AddAsync(topic);
-                    changed = true;
+                    await db.SaveChangesAsync();
                 }
 
                 foreach (var seedLesson in seedTopic.Lessons)
                 {
-                    var lesson = topic.Lessons.FirstOrDefault(l => l.Title == seedLesson.Title);
+                    var lesson = await db.Lessons
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(l => l.TopicId == topic.Id && l.Title == seedLesson.Title);
+
                     if (lesson == null)
                     {
                         lesson = new Lesson
@@ -265,27 +264,37 @@ namespace KIDIO.Data.Seed
                             OrderIndex = seedLesson.OrderIndex,
                             IsPublished = true,
                             ContentJson = seedLesson.ContentJson,
-                            Topic = topic,
-                            Vocabularies = new List<Vocabulary>()
+                            TopicId = topic.Id
                         };
 
-                        topic.Lessons.Add(lesson);
-                        changed = true;
+                        await db.Lessons.AddAsync(lesson);
+                        await db.SaveChangesAsync();
                     }
+
+                    var existingVocabsCount = await db.Vocabularies
+                        .IgnoreQueryFilters()
+                        .CountAsync(v => v.LessonId == lesson.Id);
+
+                    var currentOrderIndex = existingVocabsCount + 1;
 
                     foreach (var (word, meaning, phoneticText) in seedLesson.Vocabularies)
                     {
-                        if (lesson.Vocabularies.Any(v => v.Word == word))
-                            continue;
+                        var exists = await db.Vocabularies
+                            .IgnoreQueryFilters()
+                            .AnyAsync(v => v.LessonId == lesson.Id && v.Word == word);
 
-                        lesson.Vocabularies.Add(new Vocabulary
+                        if (!exists)
                         {
-                            Word = word,
-                            Meaning = meaning,
-                            OrderIndex = lesson.Vocabularies.Count + 1,
-                            PhoneticText = phoneticText
-                        });
-                        changed = true;
+                            await db.Vocabularies.AddAsync(new Vocabulary
+                            {
+                                Word = word,
+                                Meaning = meaning,
+                                OrderIndex = currentOrderIndex++,
+                                PhoneticText = phoneticText,
+                                LessonId = lesson.Id
+                            });
+                            await db.SaveChangesAsync();
+                        }
                     }
                 }
             }
@@ -312,13 +321,8 @@ namespace KIDIO.Data.Seed
                 if (!exists)
                 {
                     await db.AchievementDefinitions.AddAsync(sa);
-                    changed = true;
+                    await db.SaveChangesAsync();
                 }
-            }
-
-            if (changed)
-            {
-                await db.SaveChangesAsync();
             }
         }
     }

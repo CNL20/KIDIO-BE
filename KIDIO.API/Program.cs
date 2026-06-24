@@ -29,6 +29,7 @@ foreach (var path in envPaths)
 {
     if (File.Exists(path))
     {
+        Console.WriteLine($"[KIDIO Startup] Loading environment variables from: {path}");
         foreach (var line in File.ReadAllLines(path))
         {
             if (string.IsNullOrWhiteSpace(line) || line.Trim().StartsWith("#")) continue;
@@ -42,6 +43,14 @@ foreach (var path in envPaths)
                     val = val.Substring(1, val.Length - 2);
                 }
                 Environment.SetEnvironmentVariable(key, val);
+                if (key.Contains("Email") || key.Contains("ApiKey"))
+                {
+                    Console.WriteLine($"[KIDIO Startup] Loaded key: {key} (length: {val.Length})");
+                }
+                else
+                {
+                    Console.WriteLine($"[KIDIO Startup] Loaded key: {key}");
+                }
             }
         }
         break; // Only load first found .env
