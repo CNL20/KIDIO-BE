@@ -18,7 +18,9 @@ namespace KIDIO.Common.Enums
         Listening = 1,
         Speaking = 2,
         Vocabulary = 3,
-        Pronunciation = 4
+        Pronunciation = 4,
+        Writing = 5
+
     }
 
     public enum LessonType
@@ -26,7 +28,8 @@ namespace KIDIO.Common.Enums
         Story = 1,
         Dialogue = 2,
         VideoShort = 3,
-        PronunciationDrill = 4
+        PronunciationDrill = 4,
+        Alphabet = 5
     }
 
     public enum DifficultyLevel
