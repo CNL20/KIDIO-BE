@@ -220,6 +220,23 @@ namespace KIDIO.Data.Seed
                             Vocabularies = new[] { ("Teacher", "Giáo viên", "ˈtiːtʃər"), ("Book", "Sách", "bʊk"), ("Desk", "Bàn học", "dɛsk") }
                         }
                     }
+                },
+                new
+                {
+                    Name = "Alphabet",
+                    Description = "Learn and trace letters A to Z",
+                    Lessons = Enumerable.Range('A', 26).Select((c, index) => new
+                    {
+                        Title = $"Letter {(char)c}",
+                        Description = $"Trace and learn the letter {(char)c}",
+                        Type = LessonType.Alphabet,
+                        Difficulty = DifficultyLevel.Beginner,
+                        SkillFocus = SkillType.Writing,
+                        DurationSeconds = 60,
+                        OrderIndex = index + 1,
+                        ContentJson = P($"Learn how to write the letter {(char)c}."),
+                        Vocabularies = new (string, string, string)[0]
+                    }).ToArray()
                 }
             };
 
