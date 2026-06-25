@@ -30,15 +30,16 @@ public class AdminDashboardController : ControllerBase
     }
 
     /// <summary>
-    /// Get detailed dashboard with overview + recent users + top lessons
+    /// Get detailed dashboard with overview + recent users + top lessons + recent activities
     /// </summary>
     [HttpGet("detail")]
     public async Task<ActionResult<ApiResponse<AdminDashboardDetailResponse>>> GetDetail(
         [FromQuery] int recentUsersCount = 10,
         [FromQuery] int topLessonsCount = 10,
+        [FromQuery] int recentActivitiesCount = 10,
         CancellationToken ct = default)
     {
-        var result = await _dashboardService.GetDetailAsync(recentUsersCount, topLessonsCount, ct);
+        var result = await _dashboardService.GetDetailAsync(recentUsersCount, topLessonsCount, recentActivitiesCount, ct);
         return Ok(ApiResponse<AdminDashboardDetailResponse>.Ok(result));
     }
 }

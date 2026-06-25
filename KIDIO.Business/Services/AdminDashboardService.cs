@@ -60,6 +60,7 @@ public class AdminDashboardService : IAdminDashboardService
     public async Task<AdminDashboardDetailResponse> GetDetailAsync(
         int recentUsersCount = 10,
         int topLessonsCount = 10,
+        int recentActivitiesCount = 10,
         CancellationToken ct = default)
     {
         var overview = await GetOverviewAsync(ct);
@@ -109,10 +110,66 @@ public class AdminDashboardService : IAdminDashboardService
             );
         }).ToList();
 
+        // 1. Recent Lessons (Started or Completed)
+        var recentLessons = await _uow.LessonProgresses.Query()
+            .Include(p => p.Child)
+            .Include(p => p.Lesson)
+            .OrderByDescending(p => p.CompletedAt ?? p.UpdatedAt ?? p.CreatedAt)
+            .Take(recentActivitiesCount)
+            .Select(p => new AdminRecentActivityResponse(
+                p.ChildId,
+                p.Child.Name,
+                p.IsCompleted ? ActivityType.LessonCompleted.ToString() : ActivityType.LessonStarted.ToString(),
+                p.IsCompleted ? $"Completed {p.Lesson.Title}" : $"Started {p.Lesson.Title}",
+                p.IsCompleted ? p.StarsEarned.ToString() : null,
+                p.CompletedAt ?? p.UpdatedAt ?? p.CreatedAt
+            ))
+            .ToListAsync(ct);
+
+        // 2. Recent Pronunciation Scores
+        var recentPronunciations = await _uow.PronunciationLogs.Query()
+            .Include(p => p.Child)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(recentActivitiesCount)
+            .Select(p => new AdminRecentActivityResponse(
+                p.ChildId,
+                p.Child.Name,
+                ActivityType.PronunciationScored.ToString(),
+                $"Pronunciation score {p.AccuracyScore}%",
+                $"{p.AccuracyScore}%",
+                p.CreatedAt
+            ))
+            .ToListAsync(ct);
+
+        // 3. Recent Achievements
+        var recentAchievements = await _uow.Achievements.Query()
+            .Include(a => a.Child)
+            .Include(a => a.AchievementDefinition)
+            .OrderByDescending(a => a.EarnedAt)
+            .Take(recentActivitiesCount)
+            .Select(a => new AdminRecentActivityResponse(
+                a.ChildId,
+                a.Child.Name,
+                ActivityType.AchievementEarned.ToString(),
+                $"Earned {a.AchievementDefinition.Name}",
+                null,
+                a.EarnedAt
+            ))
+            .ToListAsync(ct);
+
+        // Merge, sort, and take top N
+        var recentActivities = recentLessons
+            .Concat(recentPronunciations)
+            .Concat(recentAchievements)
+            .OrderByDescending(a => a.Timestamp)
+            .Take(recentActivitiesCount)
+            .ToList();
+
         return new AdminDashboardDetailResponse(
             Overview: overview,
             RecentUsers: recentUsers,
-            TopLessons: topLessonResponses
+            TopLessons: topLessonResponses,
+            RecentActivities: recentActivities
         );
     }
 }

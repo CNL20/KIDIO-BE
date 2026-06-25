@@ -29,8 +29,26 @@ public record AdminTopLessonResponse(
     double AvgScorePercent
 );
 
+public enum ActivityType
+{
+    LessonCompleted,
+    LessonStarted,
+    PronunciationScored,
+    AchievementEarned
+}
+
+public record AdminRecentActivityResponse(
+    Guid ChildId,
+    string ChildName,
+    string ActivityType,
+    string Description,
+    string? MetaValue,
+    DateTime Timestamp
+);
+
 public record AdminDashboardDetailResponse(
     AdminDashboardOverviewResponse Overview,
     List<AdminRecentUserResponse> RecentUsers,
-    List<AdminTopLessonResponse> TopLessons
+    List<AdminTopLessonResponse> TopLessons,
+    List<AdminRecentActivityResponse> RecentActivities
 );
