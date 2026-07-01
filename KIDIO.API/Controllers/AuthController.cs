@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static KIDIO.Business.DTOs.Auth.AuthDtos;
 using System.Security.Claims;
-using FluentValidation; // Thêm thư viện FluentValidation
-using System.IO; // Thêm thư viện để đọc file HTML template
+using FluentValidation;
 
 namespace KIDIO.API.Controllers
 {
@@ -93,53 +92,16 @@ namespace KIDIO.API.Controllers
         /// </summary>
         [HttpGet("verify-email")]
         [AllowAnonymous]
-        public async Task<IActionResult> VerifyEmail([FromQuery] string token, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<object>>> VerifyEmail([FromQuery] string token, CancellationToken ct)
         {
-            // Do file đã được cấu hình tự động copy ra thư mục output khi Build, 
-            // nên tầng API vẫn đọc trực tiếp từ thư mục chạy "Templates" cực kỳ dễ dàng:
-            var templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "VerifyLink.html");
-
-            if (!System.IO.File.Exists(templatePath))
-            {
-                // Đoạn này để phòng hờ nếu bạn quên chỉnh "Copy if newer" khiến file không tìm thấy
-                return StatusCode(500, "The system is missing the configuration file for the trading interface.");
-            }
-
-            string htmlContent = await System.IO.File.ReadAllTextAsync(templatePath, ct);
-
-            var frontendUrl = _configuration["UrlSettings:FrontendUrl"] ?? "http://localhost:3000";
-            htmlContent = htmlContent.Replace("{{FrontendUrl}}", frontendUrl);
-
             if (string.IsNullOrWhiteSpace(token))
             {
-                htmlContent = htmlContent
-                    .Replace("{{StatusContent}}", "<h2 class='error'>Verification failed: Token missing!</h2>")
-                    .Replace("{{Status}}", "failed");
-                return Content(htmlContent, "text/html");
+                throw new AppException("Verification failed: Token missing!");
             }
 
-            try
-            {
-                await _authService.VerifyEmailAsync(token, ct);
-
-                htmlContent = htmlContent
-                    .Replace("{{StatusContent}}", "<h2 class='success'>Your KIDIO account has been successfully activated!</h2>")
-                    .Replace("{{Status}}", "success");
-            }
-            catch (AppException)
-            {
-                htmlContent = htmlContent
-                    .Replace("{{StatusContent}}", "<h2 class='error'>The verification link is invalid or has expired!</h2>")
-                    .Replace("{{Status}}", "invalid");
-            }
-            catch
-            {
-                htmlContent = htmlContent
-                    .Replace("{{StatusContent}}", "<h2 class='error'>The system is busy, please try again later!</h2>")
-                    .Replace("{{Status}}", "server_error");
-            }
-
-            return Content(htmlContent, "text/html");
+            await _authService.VerifyEmailAsync(token, ct);
+            
+            return Ok(ApiResponse<object>.Ok(null!, "Your KIDIO account has been successfully activated!"));
         }
 
         [HttpPost("resend-verification")]
@@ -276,36 +238,6 @@ namespace KIDIO.API.Controllers
             return Ok(ApiResponse<object>.Ok(null!, "If the email is registered, a password reset link has been sent."));
         }
 
-        /// <summary>
-        /// Hiển thị trang HTML form để user nhập mật khẩu mới (link từ email)
-        /// </summary>
-        [HttpGet("reset-password-page")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ResetPasswordPage([FromQuery] string token, CancellationToken ct)
-        {
-            var templatePath = Path.Combine(AppContext.BaseDirectory, "Templates", "ResetPasswordPage.html");
-
-            if (!System.IO.File.Exists(templatePath))
-            {
-                return StatusCode(500, "The system is missing the reset password page template.");
-            }
-
-            string htmlContent = await System.IO.File.ReadAllTextAsync(templatePath, ct);
-
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                // Token không có → trả về lỗi ngay
-                return Content("<html><body style='font-family:sans-serif;text-align:center;padding:60px'>" +
-                    "<h2 style='color:#dc2626'>⚠️ Invalid Link</h2>" +
-                    "<p>The password reset link is missing a token. Please request a new reset link.</p>" +
-                    "</body></html>", "text/html");
-            }
-
-            // Nhúng token vào form ẩn trong HTML
-            htmlContent = htmlContent.Replace("{{ResetToken}}", token);
-
-            return Content(htmlContent, "text/html");
-        }
 
         [HttpPost("reset-password")]
         [AllowAnonymous]

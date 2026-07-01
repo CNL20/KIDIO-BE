@@ -1,4 +1,4 @@
-﻿namespace KIDIO.Business.DTOs.Lesson;
+namespace KIDIO.Business.DTOs.Lesson;
 
 public record CreateLessonRequest(
     string Title,
@@ -58,6 +58,7 @@ public record LessonSummaryResponse(
     string SkillFocus,
     int DurationSeconds,
     string? ThumbnailUrl,
+    string? ContentJson,
     int OrderIndex,
     bool IsPublished
 );

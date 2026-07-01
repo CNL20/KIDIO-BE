@@ -89,7 +89,7 @@ namespace KIDIO.Business.Services
             string verificationMessage;
             try
             {
-                string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
+                string confirmationLink = $"{_urlSettings.FrontendUrl}/verify-email?token={verificationToken}";
                 string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
                 await _emailService.SendEmailAsync(newUser.Email, "KIDIO - Confirm Your Email", emailBody);
                 verificationMessage = "Account registration successful! Please check your email to verify your account before logging in.";
@@ -358,7 +358,7 @@ namespace KIDIO.Business.Services
             _uow.Users.Update(user);
             await _uow.SaveChangesAsync(ct);
 
-            string resetLink = $"{_urlSettings.BackendUrl}/api/auth/reset-password-page?token={resetToken}";
+            string resetLink = $"{_urlSettings.FrontendUrl}/reset-password?token={resetToken}";
             string emailBody = await LoadEmailTemplateWithLinkAsync(resetLink, "ResetPassword.html");
 
             try
@@ -433,7 +433,7 @@ namespace KIDIO.Business.Services
             _uow.Users.Update(user);
             await _uow.SaveChangesAsync(ct);
 
-            string confirmationLink = $"{_urlSettings.BackendUrl}/api/auth/verify-email?token={verificationToken}";
+            string confirmationLink = $"{_urlSettings.FrontendUrl}/verify-email?token={verificationToken}";
             string emailBody = await LoadEmailTemplateWithLinkAsync(confirmationLink);
 
             try

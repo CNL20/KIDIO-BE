@@ -36,6 +36,7 @@ public class LessonService : ILessonService
                 l.SkillFocus.ToString(),
                 l.DurationSeconds,
                 l.ThumbnailUrl,
+                l.ContentJson,
                 l.OrderIndex,
                 l.IsPublished
             ))
@@ -60,6 +61,7 @@ public class LessonService : ILessonService
                 l.SkillFocus.ToString(),
                 l.DurationSeconds,
                 l.ThumbnailUrl,
+                l.ContentJson,
                 l.OrderIndex,
                 l.IsPublished
             ))
@@ -88,6 +90,7 @@ public class LessonService : ILessonService
                 l.SkillFocus.ToString(),
                 l.DurationSeconds,
                 l.ThumbnailUrl,
+                l.ContentJson,
                 l.OrderIndex,
                 l.IsPublished
             ))
@@ -116,6 +119,7 @@ public class LessonService : ILessonService
                 l.SkillFocus.ToString(),
                 l.DurationSeconds,
                 l.ThumbnailUrl,
+                l.ContentJson,
                 l.OrderIndex,
                 l.IsPublished
             ))
