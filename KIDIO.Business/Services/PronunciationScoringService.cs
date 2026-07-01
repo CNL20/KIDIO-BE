@@ -32,7 +32,7 @@ public class PronunciationScoringService : IPronunciationScoringService
 
     public PronunciationScoringService(
         IUnitOfWork uow,
-        IOptions<AzureSpeechSettings> azureSpeechOptions,
+        IOptionsSnapshot<AzureSpeechSettings> azureSpeechOptions,
         IPronunciationAudioStorage audioStorage,
         ILogger<PronunciationScoringService> logger)
     {
