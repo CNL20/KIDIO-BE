@@ -18,3 +18,5 @@ publish/
 
 # OS files
 .DS_Store
+# Bỏ qua các file âm thanh tự sinh
+KIDIO.API/wwwroot/pronunciations/
