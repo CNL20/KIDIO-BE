@@ -20,6 +20,8 @@ namespace KIDIO.Data.Entities
         public DbSet<AchievementDefinition> AchievementDefinitions => Set<AchievementDefinition>();
         public DbSet<Vocabulary> Vocabularies => Set<Vocabulary>();
         public DbSet<PronunciationLog> PronunciationLogs => Set<PronunciationLog>();
+        public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+        public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,6 +37,8 @@ namespace KIDIO.Data.Entities
             modelBuilder.Entity<Achievement>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<LessonProgress>().HasQueryFilter(x => !x.Child.IsDeleted);
             modelBuilder.Entity<PronunciationLog>().HasQueryFilter(x => !x.Child.IsDeleted);
+            modelBuilder.Entity<SubscriptionPlan>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<PaymentTransaction>().HasQueryFilter(x => !x.IsDeleted);
             // User
             modelBuilder.Entity<User>(e =>
             {
@@ -113,6 +117,21 @@ namespace KIDIO.Data.Entities
                 e.HasIndex(v => new { v.LessonId, v.OrderIndex }).IsUnique();
                 e.Property(v => v.Word).HasMaxLength(200);
                 e.Property(v => v.Meaning).HasMaxLength(500);
+            });
+
+            // PaymentTransaction
+            modelBuilder.Entity<PaymentTransaction>(e =>
+            {
+                e.HasIndex(p => p.OrderCode).IsUnique(); 
+                e.HasOne(p => p.User)
+                 .WithMany(u => u.PaymentTransactions)
+                 .HasForeignKey(p => p.UserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(p => p.SubscriptionPlan)
+                 .WithMany()
+                 .HasForeignKey(p => p.SubscriptionPlanId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
         }
 

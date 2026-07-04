@@ -4,6 +4,8 @@ using KIDIO.API.Services;
 using KIDIO.Business.Interfaces;
 using KIDIO.Business.Services;
 using KIDIO.Business.Validators.AuthValidators;
+using KIDIO.Business.Services.Payment;
+using KIDIO.Business.Services.Subscription;
 using KIDIO.Common;
 using KIDIO.Data;
 using KIDIO.Data.Entities;
@@ -89,6 +91,15 @@ builder.Services.Configure<AISettings>(
 builder.Services.Configure<UrlSettings>(
     builder.Configuration.GetSection("UrlSettings"));
 
+// =========================
+// PAYOS CONFIGURATION
+// =========================
+var payOsClientId = builder.Configuration["PayOS:ClientId"] ?? "default_client_id";
+var payOsApiKey = builder.Configuration["PayOS:ApiKey"] ?? "default_api_key";
+var payOsChecksumKey = builder.Configuration["PayOS:ChecksumKey"] ?? "default_checksum_key";
+builder.Services.AddSingleton(new PayOS.PayOSClient(payOsClientId, payOsApiKey, payOsChecksumKey));
+
+
 // Cấu hình quét tự động toàn bộ Validator nằm chung Assembly với RegisterRequestValidator
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
@@ -125,6 +136,8 @@ builder.Services.AddScoped<IPronunciationAudioStorage, LocalPronunciationAudioSt
 builder.Services.AddScoped<IParentDashboardService, ParentDashboardService>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 // =========================
 // JWT AUTHENTICATION
 // =========================

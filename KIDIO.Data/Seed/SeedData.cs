@@ -1337,6 +1337,32 @@ namespace KIDIO.Data.Seed
             {
                 await db.SaveChangesAsync();
             }
+
+            // Seed Subscription Plans if empty
+            if (!await db.SubscriptionPlans.AnyAsync())
+            {
+                db.SubscriptionPlans.AddRange(
+                    new SubscriptionPlan
+                    {
+                        Name = "Fluent Pro",
+                        Description = "Gói tháng cơ bản - Mở khóa mọi tính năng",
+                        Price = 69000,
+                        DurationInDays = 30,
+                        DisplayOrder = 1,
+                        IsActive = true
+                    },
+                    new SubscriptionPlan
+                    {
+                        Name = "Premium",
+                        Description = "Gói năm - Mở khóa ưu tiên, tiết kiệm 2 tháng",
+                        Price = 690000,
+                        DurationInDays = 365,
+                        DisplayOrder = 2,
+                        IsActive = true
+                    }
+                );
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

@@ -36,7 +36,11 @@ namespace KIDIO.Data.Entities
         // Parental PIN
         public string? ParentalPin { get; set; }
 
+        // Premium
+        public DateTime? PremiumExpiryDate { get; set; }
+
         // Navigation
         public ICollection<Child> Children { get; set; } = new List<Child>();
+        public ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
     }
 }
