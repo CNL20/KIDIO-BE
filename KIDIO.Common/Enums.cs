@@ -37,4 +37,20 @@ namespace KIDIO.Common.Enums
         Elementary = 2,
         PreIntermediate = 3
     }
+
+    public enum PaymentStatus
+    {
+        Pending = 1,
+        Success = 2,
+        Failed = 3,
+        Cancelled = 4
+    }
+
+    public enum PaymentMethod
+    {
+        PayOS = 1,
+        VNPay = 2,
+        MoMo = 3,
+        Stripe = 4
+    }
 }
