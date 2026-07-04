@@ -55,7 +55,7 @@ namespace KIDIO.Business.Services.Payment
             var createPaymentReq = new CreatePaymentLinkRequest 
             {
                 OrderCode = orderCode,
-                Amount = 2000,//(int)plan.Price,
+                Amount = (int)plan.Price,
                 Description = "KIDIO Premium",
                 Items = items,
                 CancelUrl = request.CancelUrl,
