@@ -17,17 +17,25 @@ public class TopicService : ITopicService
         _uow = uow;
     }
 
-    public async Task<List<TopicSummaryResponse>> GetAllTopicsAsync(CancellationToken ct = default)
+    public async Task<List<TopicSummaryResponse>> GetAllTopicsAsync(bool includeInactive = false, CancellationToken ct = default)
     {
-        var topics = await _uow.Topics.Query()
-            .Where(t => t.IsActive)
+        var query = _uow.Topics.Query();
+        
+        if (!includeInactive)
+        {
+            query = query.Where(t => t.IsActive);
+        }
+
+        var topics = await query
             .OrderBy(t => t.OrderIndex)
             .Select(t => new TopicSummaryResponse(
                 t.Id,
                 t.Name,
                 t.IconUrl,
                 t.OrderIndex,
-                t.Lessons.Count(l => l.IsPublished && !l.IsDeleted)
+                t.Lessons.Count(l => l.IsPublished && !l.IsDeleted),
+                t.IsActive,
+                t.CreatedAt
             ))
             .ToListAsync(ct);
 
@@ -35,20 +43,28 @@ public class TopicService : ITopicService
     }
 
     public async Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(
-        int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+        int pageNumber = 1, int pageSize = 10, bool includeInactive = false, CancellationToken ct = default)
     {
-        var query = _uow.Topics.Query()
-            .Where(t => t.IsActive)
+        var query = _uow.Topics.Query();
+
+        if (!includeInactive)
+        {
+            query = query.Where(t => t.IsActive);
+        }
+
+        var mappedQuery = query
             .OrderBy(t => t.OrderIndex)
             .Select(t => new TopicSummaryResponse(
                 t.Id,
                 t.Name,
                 t.IconUrl,
                 t.OrderIndex,
-                t.Lessons.Count(l => l.IsPublished && !l.IsDeleted)
+                t.Lessons.Count(l => l.IsPublished && !l.IsDeleted),
+                t.IsActive,
+                t.CreatedAt
             ));
 
-        return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
+        return await mappedQuery.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 
     public async Task<TopicResponse> GetTopicByIdAsync(Guid topicId, CancellationToken ct = default)

@@ -1,4 +1,4 @@
-﻿namespace KIDIO.Business.DTOs.Lesson;
+namespace KIDIO.Business.DTOs.Lesson;
 
 public record CreateTopicRequest(
     string Name,
@@ -31,5 +31,7 @@ public record TopicSummaryResponse(
     string Name,
     string? IconUrl,
     int OrderIndex,
-    int TotalLessons
+    int TotalLessons,
+    bool IsActive,
+    DateTime CreatedAt
 );

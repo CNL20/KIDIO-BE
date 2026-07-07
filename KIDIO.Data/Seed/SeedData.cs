@@ -14,23 +14,9 @@ namespace KIDIO.Data.Seed
     {
         public static async Task EnsureSeedDataAsync(KidioDbContext db)
         {
-            // [FIX] Xóa dữ liệu cũ rác (như Animals, Colors) hoặc data cũ cần update (như My Home) để Seed lại từ đầu danh sách 25 Topics
-            if (await db.Topics.IgnoreQueryFilters().AnyAsync(t => t.Name == "Animals" || t.Name == "My Home"))
+            // Chỉ seed nếu chưa có data
+            if (!await db.Topics.IgnoreQueryFilters().AnyAsync())
             {
-                // 1. Xóa "thằng cháu" (Vocabularies) trước
-                var oldVocabs = await db.Vocabularies.IgnoreQueryFilters().ToListAsync();
-                db.Vocabularies.RemoveRange(oldVocabs);
-
-                // 2. Xóa "thằng con" (Lessons)
-                var oldLessons = await db.Lessons.IgnoreQueryFilters().ToListAsync();
-                db.Lessons.RemoveRange(oldLessons);
-
-                // 3. Cuối cùng mới xóa "thằng cha" (Topics)
-                var oldTopics = await db.Topics.IgnoreQueryFilters().ToListAsync();
-                db.Topics.RemoveRange(oldTopics);
-
-                await db.SaveChangesAsync();
-            }
             var seedTopics = new[]
             {
 
@@ -1337,6 +1323,7 @@ namespace KIDIO.Data.Seed
             {
                 await db.SaveChangesAsync();
             }
+            } // Đóng if (!await db.Topics.IgnoreQueryFilters().AnyAsync())
 
             // Seed Subscription Plans if empty
             if (!await db.SubscriptionPlans.AnyAsync())
