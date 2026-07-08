@@ -112,9 +112,14 @@ namespace KIDIO.Business.Services.Payment
                             PaymentMethod = transaction.PaymentMethod
                         };
                     }
+                    
+                    // Nếu không tìm thấy OrderCode (Ví dụ: Webhook test của PayOS)
+                    // Ghi log và kết thúc bình thường, KHÔNG ném exception để tránh lỗi 400
+                    Console.WriteLine($"[Webhook] OrderCode {webhookData.OrderCode} not found. This might be a test ping from PayOS.");
+                    return null!;
                 }
                 
-                throw new Exception("Webhook verification failed or order not found.");
+                throw new Exception($"Webhook verification failed with code: {webhookData.Code}");
             }
             catch (Exception ex)
             {
