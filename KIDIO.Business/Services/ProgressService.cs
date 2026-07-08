@@ -175,6 +175,12 @@ public class ProgressService : IProgressService
             );
         }).ToList();
 
+        var wordsLearned = await _uow.PronunciationLogs.Query()
+            .Where(p => p.ChildId == childId && p.AccuracyScore >= 60)
+            .Select(p => p.TargetText)
+            .Distinct()
+            .CountAsync(ct);
+
         return new ChildProgressSummary(
             ChildId: child.Id,
             ChildName: child.Name,
@@ -182,6 +188,7 @@ public class ProgressService : IProgressService
             TotalStars: child.TotalStars,
             CurrentStreakDays: child.CurrentStreakDays,
             LastLessonAt: child.LastLessonAt,
+            TotalWordsLearned: wordsLearned,
             TopicProgresses: topicProgresses
         );
     }
@@ -263,8 +270,13 @@ public class ProgressService : IProgressService
 {
     if (!isCompleted) return;
 
-    // Cộng sao — chỉ cộng phần tăng thêm so với lần trước
+    // Cộng sao — chỉ cộng phần tăng thêm so với lần trước.
+    // Nếu chơi lại (starsDelta = 0), thưởng 1 sao khích lệ (Review bonus)
     var starsDelta = Math.Max(0, newStars - oldStars);
+    if (starsDelta == 0)
+    {
+        starsDelta = 1;
+    }
     child.TotalStars += starsDelta;
 
     // Cập nhật streak

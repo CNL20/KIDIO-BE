@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Achievement;
+using KIDIO.Business.DTOs.Achievement;
 
 namespace KIDIO.Business.DTOs.Progress;
 
@@ -32,6 +32,7 @@ public record ChildProgressSummary(
     int TotalStars,
     int CurrentStreakDays,
     DateTime? LastLessonAt,
+    int TotalWordsLearned,
     List<TopicProgressItem> TopicProgresses
 );
 

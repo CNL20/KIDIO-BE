@@ -60,4 +60,17 @@ public class UsersController : ControllerBase
         var result = await _userService.VerifyPasswordAsync(request, ct);
         return Ok(ApiResponse<bool>.Ok(result, result ? "Password verification succeeded." : "Incorrect password."));
     }
+
+    [HttpGet("admin/paged")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<PagedResponse<AdminUserResponse>>>> GetAdminUsersPaged(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? keyword = null,
+        CancellationToken ct = default)
+    {
+        var result = await _userService.GetAdminUsersPagedAsync(pageNumber, pageSize, keyword, ct);
+        return Ok(ApiResponse<PagedResponse<AdminUserResponse>>.Ok(result));
+    }
 }
+

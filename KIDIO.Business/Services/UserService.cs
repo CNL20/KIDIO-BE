@@ -5,7 +5,9 @@ using KIDIO.Business.DTOs.User;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using KIDIO.Data.Repositories;
-
+using KIDIO.Business.Extensions;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 namespace KIDIO.Business.Services;
 
 public class UserService : IUserService
@@ -40,5 +42,31 @@ public class UserService : IUserService
         }
 
         return BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+    }
+
+    public async Task<PagedResponse<AdminUserResponse>> GetAdminUsersPagedAsync(
+        int pageNumber = 1, int pageSize = 10, string? keyword = null, CancellationToken ct = default)
+    {
+        var query = _uow.Users.Query().Include(u => u.Children).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower().Trim();
+            query = query.Where(u => u.DisplayName.ToLower().Contains(kw) || u.Email.ToLower().Contains(kw));
+        }
+
+        var mappedQuery = query
+            .OrderByDescending(u => u.CreatedAt)
+            .Select(u => new AdminUserResponse(
+                u.Id,
+                u.DisplayName,
+                u.Email,
+                u.Role.ToString(),
+                u.IsEmailConfirmed,
+                u.Children.Count,
+                u.CreatedAt
+            ));
+
+        return await mappedQuery.ToPagedResponseAsync(pageNumber, pageSize, ct);
     }
 }

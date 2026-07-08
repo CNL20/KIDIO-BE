@@ -165,11 +165,76 @@ public class AdminDashboardService : IAdminDashboardService
             .Take(recentActivitiesCount)
             .ToList();
 
+        // Chart: UserGrowth
+        var userGrowthData = await _uow.Users.Query()
+            .GroupBy(u => new { u.CreatedAt.Year, u.CreatedAt.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync(ct);
+        
+        var userGrowth = userGrowthData.Select(x => new ChartPoint($"{x.Month:D2}/{x.Year}", x.Count)).ToList();
+
+        // Chart: RevenueTrend
+        var revenueTrendData = await _uow.PaymentTransactions.Query()
+            .Where(p => p.Status == PaymentStatus.Success)
+            .GroupBy(p => new { p.CreatedAt.Year, p.CreatedAt.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(p => p.Amount) })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync(ct);
+
+        var revenueTrend = revenueTrendData.Select(x => new ChartPoint($"{x.Month:D2}/{x.Year}", (int)x.Revenue)).ToList();
+
+        // Chart: AgeDistribution
+        var childrenAges = await _uow.Children.Query()
+            .Select(c => c.Age)
+            .ToListAsync(ct);
+
+        var ageGroups = childrenAges.Select(age =>
+        {
+            if (age < 3) return "< 3";
+            if (age <= 5) return "3-5";
+            if (age <= 8) return "6-8";
+            return "> 8";
+        }).GroupBy(a => a)
+          .Select(g => new ChartPoint(g.Key, g.Count()))
+          .OrderBy(x => x.Label)
+          .ToList();
+
+        // Chart: ActivityTrend (Last 7 days combining LessonProgress + PronunciationLog)
+        var sevenDaysAgo = DateTime.UtcNow.AddDays(-7).Date;
+        
+        var lessonCounts = await _uow.LessonProgresses.Query()
+            .Where(p => p.CreatedAt >= sevenDaysAgo)
+            .GroupBy(p => p.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+            
+        var pronunciationCounts = await _uow.PronunciationLogs.Query()
+            .Where(p => p.CreatedAt >= sevenDaysAgo)
+            .GroupBy(p => p.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var activityTrendDict = new Dictionary<DateTime, int>();
+        for (int i = 0; i <= 7; i++) activityTrendDict[sevenDaysAgo.AddDays(i)] = 0;
+        
+        foreach(var lc in lessonCounts) if (activityTrendDict.ContainsKey(lc.Date)) activityTrendDict[lc.Date] += lc.Count;
+        foreach(var pc in pronunciationCounts) if (activityTrendDict.ContainsKey(pc.Date)) activityTrendDict[pc.Date] += pc.Count;
+
+        var activityTrend = activityTrendDict
+            .OrderBy(x => x.Key)
+            .Select(x => new ChartPoint(x.Key.ToString("dd/MM"), x.Value))
+            .ToList();
+
         return new AdminDashboardDetailResponse(
             Overview: overview,
             RecentUsers: recentUsers,
             TopLessons: topLessonResponses,
-            RecentActivities: recentActivities
+            RecentActivities: recentActivities,
+            UserGrowth: userGrowth,
+            RevenueTrend: revenueTrend,
+            AgeDistribution: ageGroups,
+            ActivityTrend: activityTrend
         );
     }
 }

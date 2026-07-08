@@ -46,9 +46,15 @@ public record AdminRecentActivityResponse(
     DateTime Timestamp
 );
 
+public record ChartPoint(string Label, int Value);
+
 public record AdminDashboardDetailResponse(
     AdminDashboardOverviewResponse Overview,
     List<AdminRecentUserResponse> RecentUsers,
     List<AdminTopLessonResponse> TopLessons,
-    List<AdminRecentActivityResponse> RecentActivities
+    List<AdminRecentActivityResponse> RecentActivities,
+    List<ChartPoint> UserGrowth,
+    List<ChartPoint> RevenueTrend,
+    List<ChartPoint> AgeDistribution,
+    List<ChartPoint> ActivityTrend
 );

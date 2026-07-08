@@ -25,7 +25,8 @@ public class TopicController : ControllerBase
         [FromQuery] int pageSize = 10,
         CancellationToken ct = default)
     {
-        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, ct);
+        bool isAdmin = User.IsInRole("Admin");
+        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, isAdmin, ct);
         return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 
@@ -36,6 +37,17 @@ public class TopicController : ControllerBase
     {
         var result = await _topicService.GetTopicByIdAsync(topicId, ct);
         return Ok(ApiResponse<TopicResponse>.Ok(result));
+    }
+
+    [HttpGet("admin/all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<PagedResponse<TopicSummaryResponse>>>> GetAllTopicsForAdmin(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
+    {
+        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, true, ct);
+        return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 
     // Admin only
