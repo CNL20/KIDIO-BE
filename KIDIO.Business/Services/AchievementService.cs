@@ -26,6 +26,9 @@ public class AchievementService : IAchievementService
         if (child.ParentId != parentId)
             throw new ForbiddenException("You do not have access to this child profile.");
 
+        // Tự động quét và phát huy hiệu mới (nếu có) trước khi trả về danh sách
+        await CheckAndUnlockAsync(childId, ct);
+
         return await _uow.Achievements.Query()
             .Include(a => a.AchievementDefinition) // Include để lấy thông tin định nghĩa
             .Where(a => a.ChildId == childId)
@@ -50,6 +53,9 @@ public class AchievementService : IAchievementService
 
         if (child.ParentId != parentId)
             throw new ForbiddenException("You do not have access to this child profile.");
+
+        // Tự động quét và phát huy hiệu mới (nếu có) trước khi trả về danh sách
+        await CheckAndUnlockAsync(childId, ct);
 
         var query = _uow.Achievements.Query()
             .Include(a => a.AchievementDefinition) // Include để lấy thông tin định nghĩa

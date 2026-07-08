@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +20,8 @@ namespace KIDIO.Data.Repositories
         public IRepository<AchievementDefinition> AchievementDefinitions { get; }
         public IRepository<Vocabulary> Vocabularies { get; }
         public IRepository<PronunciationLog> PronunciationLogs { get; }
+        public IRepository<PaymentTransaction> PaymentTransactions { get; }
+        public IRepository<SubscriptionPlan> SubscriptionPlans { get; }
 
         public UnitOfWork(KidioDbContext context)
         {
@@ -33,6 +35,8 @@ namespace KIDIO.Data.Repositories
             AchievementDefinitions = new Repository<AchievementDefinition>(context);
             Vocabularies = new Repository<Vocabulary>(context);
             PronunciationLogs = new Repository<PronunciationLog>(context);
+            PaymentTransactions = new Repository<PaymentTransaction>(context);
+            SubscriptionPlans = new Repository<SubscriptionPlan>(context);
         }
 
         public Task<int> SaveChangesAsync(CancellationToken ct = default)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,8 @@ namespace KIDIO.Data.Repositories
         IRepository<AchievementDefinition> AchievementDefinitions { get; }
         IRepository<Vocabulary> Vocabularies { get; }
         IRepository<PronunciationLog> PronunciationLogs { get; }
+        IRepository<PaymentTransaction> PaymentTransactions { get; }
+        IRepository<SubscriptionPlan> SubscriptionPlans { get; }
 
         Task<int> SaveChangesAsync(CancellationToken ct = default);
     }
