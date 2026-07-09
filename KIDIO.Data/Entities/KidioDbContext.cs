@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using KIDIO.Common.Enums;
 
 namespace KIDIO.Data.Entities
 {
@@ -56,6 +57,7 @@ namespace KIDIO.Data.Entities
                  .HasForeignKey(c => c.ParentId)
                  .OnDelete(DeleteBehavior.Cascade);
                 e.Property(c => c.Name).HasMaxLength(100);
+                e.Property(c => c.StartingLevel).HasDefaultValue(DifficultyLevel.Beginner);
             });
 
             // Achievement -> AchievementDefinition & Child
@@ -92,6 +94,7 @@ namespace KIDIO.Data.Entities
             modelBuilder.Entity<Topic>(e =>
             {
                 e.HasIndex(t => t.OrderIndex).IsUnique();
+                e.Property(t => t.MinDifficulty).HasDefaultValue(DifficultyLevel.Beginner);
             });
 
             // Lesson -> Topic

@@ -1261,6 +1261,7 @@ namespace KIDIO.Data.Seed
                         IconUrl = seedTopic.IconUrl,
                         OrderIndex = nextTopicOrder++,
                         IsActive = true,
+                        MinDifficulty = DifficultyLevel.Beginner,
                         Lessons = new List<Lesson>()
                     };
 
@@ -1348,6 +1349,21 @@ namespace KIDIO.Data.Seed
                         IsActive = true
                     }
                 );
+                await db.SaveChangesAsync();
+            }
+
+            // Fix corrupted data from previous bug where enum defaults to 0
+            var corruptTopics = await db.Topics.IgnoreQueryFilters().Where(t => (int)t.MinDifficulty == 0).ToListAsync();
+            if (corruptTopics.Any())
+            {
+                foreach(var t in corruptTopics) t.MinDifficulty = DifficultyLevel.Beginner;
+                await db.SaveChangesAsync();
+            }
+
+            var corruptChildren = await db.Children.IgnoreQueryFilters().Where(c => (int)c.StartingLevel == 0).ToListAsync();
+            if (corruptChildren.Any())
+            {
+                foreach(var c in corruptChildren) c.StartingLevel = DifficultyLevel.Beginner;
                 await db.SaveChangesAsync();
             }
         }

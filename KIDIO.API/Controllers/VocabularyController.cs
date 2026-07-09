@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Vocabulary;
+using KIDIO.Business.DTOs.Vocabulary;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -34,9 +34,11 @@ public class VocabularyController : ControllerBase
     public async Task<ActionResult<ApiResponse<PagedResponse<VocabularyResponse>>>> GetAll(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? keyword = null,
+        [FromQuery] Guid? lessonId = null,
         CancellationToken ct = default)
     {
-        var result = await _vocabService.GetAllPagedAsync(pageNumber, pageSize, ct);
+        var result = await _vocabService.GetAllPagedAsync(pageNumber, pageSize, keyword, lessonId, ct);
         return Ok(ApiResponse<PagedResponse<VocabularyResponse>>.Ok(result));
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using FluentValidation;
 using KIDIO.Business.DTOs.User;
 using KIDIO.Business.Interfaces;
@@ -67,10 +68,36 @@ public class UsersController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? keyword = null,
+        [FromQuery] string? role = null,
+        [FromQuery] string? status = null,
         CancellationToken ct = default)
     {
-        var result = await _userService.GetAdminUsersPagedAsync(pageNumber, pageSize, keyword, ct);
+        var result = await _userService.GetAdminUsersPagedAsync(pageNumber, pageSize, keyword, role, status, ct);
         return Ok(ApiResponse<PagedResponse<AdminUserResponse>>.Ok(result));
+    }
+
+    [HttpPut("admin/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<AdminUserResponse>>> EditUser(
+        Guid id, [FromBody] EditUserRequest request, CancellationToken ct)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _ = Guid.TryParse(userIdString, out Guid currentUserId);
+
+        var result = await _userService.EditUserAsync(id, request, currentUserId, ct);
+        return Ok(ApiResponse<AdminUserResponse>.Ok(result, "User updated successfully."));
+    }
+
+    [HttpPatch("admin/{id:guid}/status")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> UpdateUserStatus(
+        Guid id, [FromBody] UpdateUserStatusRequest request, CancellationToken ct)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _ = Guid.TryParse(userIdString, out Guid currentUserId);
+
+        await _userService.UpdateUserStatusAsync(id, request, currentUserId, ct);
+        return Ok(ApiResponse<object>.Ok(null!, "User status updated successfully."));
     }
 }
 

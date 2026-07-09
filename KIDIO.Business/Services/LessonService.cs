@@ -44,15 +44,59 @@ public class LessonService : ILessonService
     }
 
     public async Task<PagedResponse<LessonSummaryResponse>> GetAllLessonsPagedAsync(
-        bool includeUnpublished = false, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+        bool includeUnpublished = false, int pageNumber = 1, int pageSize = 10, string? keyword = null, Guid? topicId = null, CancellationToken ct = default)
     {
         var query = _uow.Lessons.Query();
 
         if (!includeUnpublished)
             query = query.Where(l => l.IsPublished);
 
+        if (topicId.HasValue)
+            query = query.Where(l => l.TopicId == topicId.Value);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(l => l.Title.ToLower().Contains(kw) || 
+                                    (l.Description != null && l.Description.ToLower().Contains(kw)));
+        }
+
         return await query
             .OrderBy(l => l.OrderIndex)
+            .Select(l => new LessonSummaryResponse(
+                l.Id,
+                l.Title,
+                l.Type.ToString(),
+                l.Difficulty.ToString(),
+                l.SkillFocus.ToString(),
+                l.DurationSeconds,
+                l.ThumbnailUrl,
+                l.ContentJson,
+                l.OrderIndex,
+                l.IsPublished
+            ))
+            .ToPagedResponseAsync(pageNumber, pageSize, ct);
+    }
+
+    public async Task<PagedResponse<LessonSummaryResponse>> GetDeletedLessonsPagedAsync(
+        int pageNumber = 1, int pageSize = 10, string? keyword = null, Guid? topicId = null, CancellationToken ct = default)
+    {
+        var query = _uow.Lessons.Query()
+            .IgnoreQueryFilters()
+            .Where(l => l.IsDeleted);
+
+        if (topicId.HasValue)
+            query = query.Where(l => l.TopicId == topicId.Value);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(l => l.Title.ToLower().Contains(kw) || 
+                                    (l.Description != null && l.Description.ToLower().Contains(kw)));
+        }
+
+        return await query
+            .OrderByDescending(l => l.UpdatedAt ?? l.CreatedAt)
             .Select(l => new LessonSummaryResponse(
                 l.Id,
                 l.Title,

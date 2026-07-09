@@ -116,6 +116,11 @@ namespace KIDIO.Business.Services
             var user = await _uow.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower(), ct)
                        ?? throw new UnauthorizedException("Incorrect email or password.");
 
+            if (user.IsSuspended)
+            {
+                throw new UnauthorizedException("Your account has been suspended. Please contact the administrator.");
+            }
+
             if (string.IsNullOrEmpty(user.PasswordHash))
             {
                 throw new UnauthorizedException("This account was created using Google Sign-In. Please sign in with Google.");
@@ -170,6 +175,11 @@ namespace KIDIO.Business.Services
             // 2. Tìm hoặc tạo user
             var user = await _uow.Users.FirstOrDefaultAsync(
                 u => u.GoogleId == payload.Subject || u.Email == payload.Email, ct);
+
+            if (user is not null && user.IsSuspended)
+            {
+                throw new UnauthorizedException("Your account has been suspended. Please contact the administrator.");
+            }
 
             if (user is null)
             {

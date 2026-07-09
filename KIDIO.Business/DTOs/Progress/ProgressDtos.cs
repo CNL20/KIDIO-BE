@@ -2,6 +2,13 @@ using KIDIO.Business.DTOs.Achievement;
 
 namespace KIDIO.Business.DTOs.Progress;
 
+public record ChildWeeklyProgressResponse(
+    DateTime WeekStart,
+    DateTime WeekEnd,
+    int CompletedLessons,
+    int TimeSpentSeconds
+);
+
 public record SubmitProgressRequest(
     Guid ChildId,
     Guid LessonId,
@@ -33,7 +40,8 @@ public record ChildProgressSummary(
     int CurrentStreakDays,
     DateTime? LastLessonAt,
     int TotalWordsLearned,
-    List<TopicProgressItem> TopicProgresses
+    List<TopicProgressItem> TopicProgresses,
+    List<ChildWeeklyProgressResponse> WeeklyProgress
 );
 
 public record TopicProgressItem(

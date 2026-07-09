@@ -1,4 +1,4 @@
-﻿using KIDIO.Business.DTOs.Vocabulary;
+using KIDIO.Business.DTOs.Vocabulary;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
@@ -49,10 +49,27 @@ public class VocabularyService : IVocabularyService
     }
 
     public async Task<PagedResponse<VocabularyResponse>> GetAllPagedAsync(
-        int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+        int pageNumber = 1, int pageSize = 10, string? keyword = null, Guid? lessonId = null, CancellationToken ct = default)
     {
-        return await _uow.Vocabularies.Query()
+        var query = _uow.Vocabularies.Query()
             .Include(v => v.Lesson)
+            .AsQueryable();
+
+        if (lessonId.HasValue)
+            query = query.Where(v => v.LessonId == lessonId.Value);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(v =>
+                v.Word.ToLower().Contains(kw) ||
+                v.Meaning.ToLower().Contains(kw) ||
+                (v.PhoneticText != null && v.PhoneticText.ToLower().Contains(kw)) ||
+                (v.ExampleSentence != null && v.ExampleSentence.ToLower().Contains(kw)) ||
+                (v.Lesson != null && v.Lesson.Title.ToLower().Contains(kw)));
+        }
+
+        return await query
             .OrderBy(v => v.OrderIndex)
             .ThenBy(v => v.CreatedAt)
             .Select(v => new VocabularyResponse(

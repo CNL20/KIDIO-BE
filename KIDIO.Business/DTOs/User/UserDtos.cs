@@ -11,6 +11,10 @@ public record AdminUserResponse(
     string Email,
     string Role,
     bool IsEmailConfirmed,
+    bool IsSuspended,
     int ChildrenCount,
     DateTime CreatedAt
 );
+
+public record EditUserRequest(string Role);
+public record UpdateUserStatusRequest(bool IsSuspended);

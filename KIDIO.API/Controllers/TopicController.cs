@@ -23,10 +23,11 @@ public class TopicController : ControllerBase
     public async Task<ActionResult<ApiResponse<PagedResponse<TopicSummaryResponse>>>> GetTopics(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? keyword = null,
         CancellationToken ct = default)
     {
         bool isAdmin = User.IsInRole("Admin");
-        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, isAdmin, ct);
+        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, isAdmin, keyword, ct);
         return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 
@@ -44,9 +45,22 @@ public class TopicController : ControllerBase
     public async Task<ActionResult<ApiResponse<PagedResponse<TopicSummaryResponse>>>> GetAllTopicsForAdmin(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string? keyword = null,
         CancellationToken ct = default)
     {
-        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, true, ct);
+        var result = await _topicService.GetTopicsPagedAsync(pageNumber, pageSize, true, keyword, ct);
+        return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
+    }
+
+    [HttpGet("admin/trash")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<PagedResponse<TopicSummaryResponse>>>> GetAllDeletedTopicsForAdmin(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? keyword = null,
+        CancellationToken ct = default)
+    {
+        var result = await _topicService.GetDeletedTopicsPagedAsync(pageNumber, pageSize, keyword, ct);
         return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 

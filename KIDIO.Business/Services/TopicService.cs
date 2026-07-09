@@ -76,12 +76,19 @@ public class TopicService : ITopicService
     }
 
     public async Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(
-        int pageNumber = 1, int pageSize = 10, bool includeInactive = false, CancellationToken ct = default)
+        int pageNumber = 1, int pageSize = 10, bool includeInactive = false, string? keyword = null, CancellationToken ct = default)
     {
         var query = _uow.Topics.Query();
 
         if (!includeInactive)
             query = query.Where(t => t.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(t => t.Name.ToLower().Contains(kw) || 
+                                    (t.Description != null && t.Description.ToLower().Contains(kw)));
+        }
 
         var mappedQuery = query
             .OrderBy(t => t.OrderIndex)
@@ -96,6 +103,38 @@ public class TopicService : ITopicService
                 t.Access.ToString(),
                 t.MinDifficulty.ToString(),
                 true // Admin paged - luôn unlocked
+            ));
+
+        return await mappedQuery.ToPagedResponseAsync(pageNumber, pageSize, ct);
+    }
+
+    public async Task<PagedResponse<TopicSummaryResponse>> GetDeletedTopicsPagedAsync(
+        int pageNumber = 1, int pageSize = 10, string? keyword = null, CancellationToken ct = default)
+    {
+        var query = _uow.Topics.Query()
+            .IgnoreQueryFilters()
+            .Where(t => t.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(t => t.Name.ToLower().Contains(kw) || 
+                                    (t.Description != null && t.Description.ToLower().Contains(kw)));
+        }
+
+        var mappedQuery = query
+            .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+            .Select(t => new TopicSummaryResponse(
+                t.Id,
+                t.Name,
+                t.IconUrl,
+                t.OrderIndex,
+                0, // không cần count lesson cho thùng rác
+                t.IsActive,
+                t.CreatedAt,
+                t.Access.ToString(),
+                t.MinDifficulty.ToString(),
+                true
             ));
 
         return await mappedQuery.ToPagedResponseAsync(pageNumber, pageSize, ct);
@@ -138,7 +177,7 @@ public class TopicService : ITopicService
             Description = request.Description,
             IconUrl = request.IconUrl,
             OrderIndex = request.OrderIndex,
-            IsActive = true,
+            IsActive = request.IsActive ?? true,
             Access = ParseEnum<AccessType>(request.Access ?? "Free"),
             MinDifficulty = ParseEnum<DifficultyLevel>(request.MinDifficulty ?? "Beginner")
         };

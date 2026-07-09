@@ -159,10 +159,12 @@ public class ProgressService : IProgressService
     {
         var child = await VerifyChildOwnershipAsync(childId, parentId, ct);
 
-        // Lấy tất cả progress của child
-        var progresses = await _uow.LessonProgresses.Query()
-            .Where(p => p.ChildId == childId && p.IsCompleted)
+        // Lấy tất cả progress của child để tính thời gian học (kể cả chưa hoàn thành)
+        var allProgresses = await _uow.LessonProgresses.Query()
+            .Where(p => p.ChildId == childId)
             .ToListAsync(ct);
+
+        var completedProgresses = allProgresses.Where(p => p.IsCompleted).ToList();
 
         // Lấy tất cả topic + lesson để tính %
         var topics = await _uow.Topics.Query()
@@ -171,7 +173,7 @@ public class ProgressService : IProgressService
             .OrderBy(t => t.OrderIndex)
             .ToListAsync(ct);
 
-        var completedLessonIds = progresses.Select(p => p.LessonId).ToHashSet();
+        var completedLessonIds = completedProgresses.Select(p => p.LessonId).ToHashSet();
 
         var topicProgresses = topics.Select(t =>
         {
@@ -197,12 +199,13 @@ public class ProgressService : IProgressService
         return new ChildProgressSummary(
             ChildId: child.Id,
             ChildName: child.Name,
-            TotalLessonsCompleted: progresses.Count,
+            TotalLessonsCompleted: completedProgresses.Count,
             TotalStars: child.TotalStars,
             CurrentStreakDays: child.CurrentStreakDays,
             LastLessonAt: child.LastLessonAt,
             TotalWordsLearned: wordsLearned,
-            TopicProgresses: topicProgresses
+            TopicProgresses: topicProgresses,
+            WeeklyProgress: BuildWeeklyProgress(allProgresses, 4)
         );
     }
 
@@ -263,6 +266,43 @@ public class ProgressService : IProgressService
     }
 
     // ── Helpers ─────────────────────────────────────────────
+
+    private static List<ChildWeeklyProgressResponse> BuildWeeklyProgress(
+        List<LessonProgress> childProgresses,
+        int weeks)
+    {
+        var today = DateTime.UtcNow.Date;
+        var startWeek = StartOfWeek(today).AddDays(-(weeks - 1) * 7);
+
+        var result = new List<ChildWeeklyProgressResponse>();
+
+        for (var i = 0; i < weeks; i++)
+        {
+            var weekStart = startWeek.AddDays(i * 7);
+            var weekEnd = weekStart.AddDays(6);
+
+            var weekProgresses = childProgresses.Where(p =>
+            {
+                var activityDate = (p.UpdatedAt ?? p.CompletedAt ?? p.CreatedAt).Date;
+                return activityDate >= weekStart && activityDate <= weekEnd;
+            }).ToList();
+
+            result.Add(new ChildWeeklyProgressResponse(
+                WeekStart: weekStart,
+                WeekEnd: weekEnd,
+                CompletedLessons: weekProgresses.Count(p => p.IsCompleted),
+                TimeSpentSeconds: weekProgresses.Sum(p => p.TimeSpentSeconds)
+            ));
+        }
+
+        return result;
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = (7 + (int)date.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+        return date.AddDays(-diff).Date;
+    }
 
     private static int CalculateStars(int scorePercent) => scorePercent switch
     {

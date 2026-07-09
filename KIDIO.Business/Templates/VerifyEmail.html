@@ -1,18 +1,144 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIDIO - Verify Your Email</title>
+    <style>
+        body {
+            font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #E8F6FF;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #E8F6FF;
+            padding: 40px 10px;
+        }
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(43, 173, 238, 0.15);
+            text-align: center;
+        }
+        .header {
+            background-color: #2BADEE;
+            background-image: linear-gradient(135deg, #2BADEE 0%, #1E90D0 100%);
+            padding: 40px 20px 70px 20px;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .mascot-container {
+            margin-top: -60px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .mascot {
+            width: 120px;
+            height: 120px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: 5px solid #FF7E67;
+            object-fit: contain;
+            background: #E8F6FF;
+        }
+        .content {
+            padding: 20px 40px 40px 40px;
+        }
+        h2 {
+            color: #102d54;
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #5a7184;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .btn {
+            display: inline-block;
+            padding: 16px 40px;
+            background-color: #FF7E67;
+            background-image: linear-gradient(135deg, #FF7E67 0%, #FF5A3D 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 8px 20px rgba(255, 126, 103, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 126, 103, 0.5);
+        }
+        .link-text {
+            word-break: break-all;
+            color: #2BADEE;
+            font-size: 13px;
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px dashed #cce7ff;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 25px;
+            font-size: 13px;
+            color: #a0aec0;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
-        <h2 style='color: #1A237E;'>Welcome to KIDIO!</h2>
-        <p>Thank you for signing up. Please click the button below to verify your account and get started:</p>
-        <div style='text-align: center; margin: 30px 0;'>
-            <a href='{{ConfirmationLink}}' style='display: inline-block; padding: 15px 25px; background-color: #FF9800; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Verify Email Address</a>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>KIDIO</h1>
+                <p style="color: #e0f2fe; margin-top: 5px; margin-bottom: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Learning Adventure</p>
+            </div>
+            
+            <div class="mascot-container">
+                <!-- LƯU Ý: Khi đưa lên môi trường thật (Production), bạn PHẢI đổi đường dẫn file:/// dưới đây thành đường link tĩnh của frontend (vd: https://kidio.vn/assets/kid-login-cow-mascot.png) thì mới hiển thị trong email gửi đi được -->
+                <img src="file:///d:/STUDY/Ky_8/EXE_201/kidio/public/assets/kid-login-cow-mascot.png" alt="KIDIO Mascot" class="mascot">
+            </div>
+            
+            <div class="content">
+                <h2>Welcome to KIDIO! 🚀</h2>
+                <p>Chào mừng bạn đã gia nhập chuyến phiêu lưu tri thức cùng Bò Kiki. Chỉ còn một bước nhỏ cuối cùng để bắt đầu hành trình thôi!</p>
+                
+                <a href="{{ConfirmationLink}}" class="btn">XÁC THỰC TÀI KHOẢN</a>
+                
+                <p style="margin-top: 30px; font-size: 14px; color: #a0aec0;">Nếu bạn không hề đăng ký tài khoản tại KIDIO, xin hãy bỏ qua email này nhé.</p>
+                
+                <div class="link-text">
+                    <span style="color: #5a7184; font-size: 12px;">Hoặc copy đường link này dán vào trình duyệt:</span><br>
+                    {{ConfirmationLink}}
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p style="margin: 0;">&copy; 2024 KIDIO Education. All rights reserved.</p>
+            </div>
         </div>
-        <p style='margin-top: 20px; color: #666; font-size: 12px;'>If you did not create an account, please ignore this email.</p>
-        <hr style='border: 0; border-top: 1px solid #eee;' />
-        <p style='color: #999; font-size: 12px;'>Best regards,<br>The KIDIO Team</p>
     </div>
 </body>
 </html>

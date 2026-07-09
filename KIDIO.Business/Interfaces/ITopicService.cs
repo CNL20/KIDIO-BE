@@ -7,7 +7,8 @@ public interface ITopicService
 {
     Task<List<TopicSummaryResponse>> GetAllTopicsAsync(bool includeInactive = false, CancellationToken ct = default);
     Task<List<TopicSummaryResponse>> GetAllTopicsForChildAsync(Guid childId, CancellationToken ct = default);
-    Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(int pageNumber = 1, int pageSize = 10, bool includeInactive = false, CancellationToken ct = default);
+    Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(int pageNumber = 1, int pageSize = 10, bool includeInactive = false, string? keyword = null, CancellationToken ct = default);
+    Task<PagedResponse<TopicSummaryResponse>> GetDeletedTopicsPagedAsync(int pageNumber = 1, int pageSize = 10, string? keyword = null, CancellationToken ct = default);
     Task<TopicResponse> GetTopicByIdAsync(Guid topicId, CancellationToken ct = default);
     Task<TopicResponse> CreateTopicAsync(CreateTopicRequest request, CancellationToken ct = default);
     Task<TopicResponse> UpdateTopicAsync(Guid topicId, UpdateTopicRequest request, CancellationToken ct = default);

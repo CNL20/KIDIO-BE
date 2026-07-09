@@ -6,7 +6,8 @@ public record CreateTopicRequest(
     string? IconUrl,
     int OrderIndex,
     string? Access,         // "Free" | "Premium", default Free
-    string? MinDifficulty   // "Beginner" | "Elementary" | "PreIntermediate", default Beginner
+    string? MinDifficulty,  // "Beginner" | "Elementary" | "PreIntermediate", default Beginner
+    bool? IsActive = true
 );
 
 public record UpdateTopicRequest(

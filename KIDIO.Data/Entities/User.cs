@@ -15,6 +15,7 @@ namespace KIDIO.Data.Entities
         public string DisplayName { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public UserRole Role { get; set; } = UserRole.Parent;
+        public bool IsSuspended { get; set; } = false;
 
         // OAuth
         public string? GoogleId { get; set; }
