@@ -32,7 +32,8 @@ public record ChildSummaryResponse(
     int Age,
     string? AvatarUrl,
     int TotalStars,
-    int CurrentStreakDays
+    int CurrentStreakDays,
+    string StartingLevel
 );
 
 public record AddStarsRequest(

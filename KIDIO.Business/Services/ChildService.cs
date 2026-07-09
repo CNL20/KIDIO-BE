@@ -43,7 +43,8 @@ public class ChildService : IChildService
                 c.Age,
                 c.AvatarUrl,
                 c.TotalStars,
-                c.CurrentStreakDays
+                c.CurrentStreakDays,
+                c.StartingLevel.ToString()
             ));
 
         return await query.ToPagedResponseAsync(pageNumber, pageSize, ct);
@@ -194,7 +195,8 @@ public class ChildService : IChildService
         Age: c.Age,
         AvatarUrl: c.AvatarUrl,
         TotalStars: c.TotalStars,
-        CurrentStreakDays: c.CurrentStreakDays
+        CurrentStreakDays: c.CurrentStreakDays,
+        StartingLevel: c.StartingLevel.ToString()
     );
 
     private static ChildResponse MapToResponse(Child c) => new(
