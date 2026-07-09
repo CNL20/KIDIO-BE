@@ -182,22 +182,21 @@ namespace KIDIO.API.Controllers
         [Authorize]
         // [DESIGN FIX #1] Đổi từ object ẩn danh sang UserInfoDto để Swagger sinh schema chính xác
         // và các client có thể deserialize đúng kiểu dữ liệu.
-        public ActionResult<ApiResponse<UserInfoDto>> Me()
+        public async Task<ActionResult<ApiResponse<UserInfoDto>>> Me([FromServices] KIDIO.Data.Repositories.IUnitOfWork uow, CancellationToken ct)
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var name = User.FindFirstValue(ClaimTypes.Name);
-            var role = User.FindFirstValue(ClaimTypes.Role);
+            if (id is null) throw new UnauthorizedAccessException("Invalid token claims.");
 
-            if (id is null || email is null || name is null || role is null)
-                throw new UnauthorizedAccessException("Invalid token claims.");
+            var user = await uow.Users.GetByIdAsync(Guid.Parse(id), ct);
+            if (user == null) throw new UnauthorizedAccessException("User not found.");
 
             var userInfo = new UserInfoDto(
-                Id: Guid.Parse(id),
-                Email: email,
-                DisplayName: name,
-                AvatarUrl: null, // AvatarUrl không có trong JWT claims; client lấy từ AuthResponse lúc login
-                Role: role
+                Id: user.Id,
+                Email: user.Email,
+                DisplayName: user.DisplayName,
+                AvatarUrl: user.AvatarUrl,
+                Role: user.Role.ToString(),
+                PremiumExpiryDate: user.PremiumExpiryDate
             );
 
             return Ok(ApiResponse<UserInfoDto>.Ok(userInfo));

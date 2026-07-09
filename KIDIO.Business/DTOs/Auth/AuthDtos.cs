@@ -48,7 +48,8 @@ namespace KIDIO.Business.DTOs.Auth
             string Email,
             string DisplayName,
             string? AvatarUrl,
-            string Role
+            string Role,
+            DateTime? PremiumExpiryDate
         );
 
     }

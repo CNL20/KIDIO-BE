@@ -291,7 +291,8 @@ namespace KIDIO.Business.Services
                     Email: user.Email,
                     DisplayName: user.DisplayName,
                     AvatarUrl: user.AvatarUrl,
-                    Role: user.Role.ToString()
+                    Role: user.Role.ToString(),
+                    PremiumExpiryDate: user.PremiumExpiryDate
                 )
             );
         }
