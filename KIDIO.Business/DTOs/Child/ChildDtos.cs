@@ -3,7 +3,8 @@ namespace KIDIO.Business.DTOs.Child;
 public record CreateChildRequest(
     string Name,
     int Age,
-    string? AvatarUrl
+    string? AvatarUrl,
+    string? StartingLevel  // "No" | "A little" | "Yes" → Beginner | Elementary | PreIntermediate
 );
 
 public record UpdateChildRequest(
@@ -21,7 +22,8 @@ public record ChildResponse(
     int CurrentStreakDays,
     DateTime? LastLessonAt,
     DateTime CreatedAt,
-    bool IsRecommendedAge
+    bool IsRecommendedAge,
+    string StartingLevel    // trả về string cho Frontend dễ đọc
 );
 
 public record ChildSummaryResponse(

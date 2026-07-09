@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +16,9 @@ namespace KIDIO.Data.Entities
         public int TotalStars { get; set; } = 0;
         public int CurrentStreakDays { get; set; } = 0;
         public DateTime? LastLessonAt { get; set; }
+
+        // Placement level: quyết định topic nào được mở khóa ngay từ đầu
+        public DifficultyLevel StartingLevel { get; set; } = DifficultyLevel.Beginner;
 
         // FK
         public Guid ParentId { get; set; }

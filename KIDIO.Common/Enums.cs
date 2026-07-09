@@ -38,6 +38,12 @@ namespace KIDIO.Common.Enums
         PreIntermediate = 3
     }
 
+    public enum AccessType
+    {
+        Free = 0,
+        Premium = 1
+    }
+
     public enum PaymentStatus
     {
         Pending = 1,

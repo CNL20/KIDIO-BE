@@ -2,6 +2,7 @@ using KIDIO.Business.DTOs.Child;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
+using KIDIO.Common.Enums;
 using KIDIO.Data.Entities;
 using KIDIO.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +76,8 @@ public class ChildService : IChildService
             Name = request.Name.Trim(),
             Age = request.Age,
             AvatarUrl = request.AvatarUrl,
-            ParentId = parentId
+            ParentId = parentId,
+            StartingLevel = ParseStartingLevel(request.StartingLevel)
         };
 
         await _uow.Children.AddAsync(child, ct);
@@ -204,6 +206,15 @@ public class ChildService : IChildService
         CurrentStreakDays: c.CurrentStreakDays,
         LastLessonAt: c.LastLessonAt,
         CreatedAt: c.CreatedAt,
-        IsRecommendedAge: c.Age <= 10   // ← chỉ là thông tin, không phải rule
+        IsRecommendedAge: c.Age <= 10,
+        StartingLevel: c.StartingLevel.ToString()
     );
+
+    // Convert "No"/"A little"/"Yes" → DifficultyLevel enum
+    private static DifficultyLevel ParseStartingLevel(string? raw) => raw?.ToLower() switch
+    {
+        "a little" or "little"  => DifficultyLevel.Elementary,
+        "yes"                   => DifficultyLevel.PreIntermediate,
+        _                       => DifficultyLevel.Beginner  // "No" or null → Beginner
+    };
 }

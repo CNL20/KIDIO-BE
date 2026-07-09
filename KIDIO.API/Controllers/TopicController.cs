@@ -50,6 +50,16 @@ public class TopicController : ControllerBase
         return Ok(ApiResponse<PagedResponse<TopicSummaryResponse>>.Ok(result));
     }
 
+    // Dùng cho Kid - trả về IsUnlocked dựa trên StartingLevel của bé
+    [HttpGet("for-child/{childId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<TopicSummaryResponse>>>> GetTopicsForChild(
+        Guid childId, CancellationToken ct)
+    {
+        var result = await _topicService.GetAllTopicsForChildAsync(childId, ct);
+        return Ok(ApiResponse<List<TopicSummaryResponse>>.Ok(result));
+    }
+
     // Admin only
     [HttpPost]
     [Authorize(Roles = "Admin")]

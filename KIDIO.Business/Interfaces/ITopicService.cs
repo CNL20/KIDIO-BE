@@ -6,6 +6,7 @@ namespace KIDIO.Business.Interfaces;
 public interface ITopicService
 {
     Task<List<TopicSummaryResponse>> GetAllTopicsAsync(bool includeInactive = false, CancellationToken ct = default);
+    Task<List<TopicSummaryResponse>> GetAllTopicsForChildAsync(Guid childId, CancellationToken ct = default);
     Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(int pageNumber = 1, int pageSize = 10, bool includeInactive = false, CancellationToken ct = default);
     Task<TopicResponse> GetTopicByIdAsync(Guid topicId, CancellationToken ct = default);
     Task<TopicResponse> CreateTopicAsync(CreateTopicRequest request, CancellationToken ct = default);

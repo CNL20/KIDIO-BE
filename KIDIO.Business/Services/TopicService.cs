@@ -2,6 +2,7 @@ using KIDIO.Business.DTOs.Lesson;
 using KIDIO.Business.Extensions;
 using KIDIO.Business.Interfaces;
 using KIDIO.Common;
+using KIDIO.Common.Enums;
 using KIDIO.Data.Entities;
 using KIDIO.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,16 +18,15 @@ public class TopicService : ITopicService
         _uow = uow;
     }
 
+    // Lấy tất cả Topic cho Admin (không cần childId - IsUnlocked luôn true)
     public async Task<List<TopicSummaryResponse>> GetAllTopicsAsync(bool includeInactive = false, CancellationToken ct = default)
     {
         var query = _uow.Topics.Query();
         
         if (!includeInactive)
-        {
             query = query.Where(t => t.IsActive);
-        }
 
-        var topics = await query
+        return await query
             .OrderBy(t => t.OrderIndex)
             .Select(t => new TopicSummaryResponse(
                 t.Id,
@@ -35,11 +35,44 @@ public class TopicService : ITopicService
                 t.OrderIndex,
                 t.Lessons.Count(l => l.IsPublished && !l.IsDeleted),
                 t.IsActive,
-                t.CreatedAt
+                t.CreatedAt,
+                t.Access.ToString(),
+                t.MinDifficulty.ToString(),
+                true // Admin luôn thấy tất cả là unlocked
             ))
             .ToListAsync(ct);
+    }
 
-        return topics;
+    // Lấy Topic theo ChildId để tính IsUnlocked dựa trên StartingLevel của bé
+    public async Task<List<TopicSummaryResponse>> GetAllTopicsForChildAsync(
+        Guid childId, CancellationToken ct = default)
+    {
+        var child = await _uow.Children.GetByIdAsync(childId, ct)
+            ?? throw new NotFoundException("Child");
+
+        var topics = await _uow.Topics.Query()
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.OrderIndex)
+            .Select(t => new
+            {
+                t.Id, t.Name, t.IconUrl, t.OrderIndex, t.IsActive, t.CreatedAt,
+                t.Access, t.MinDifficulty,
+                TotalLessons = t.Lessons.Count(l => l.IsPublished && !l.IsDeleted)
+            })
+            .ToListAsync(ct);
+
+        return topics.Select(t => new TopicSummaryResponse(
+            t.Id,
+            t.Name,
+            t.IconUrl,
+            t.OrderIndex,
+            t.TotalLessons,
+            t.IsActive,
+            t.CreatedAt,
+            t.Access.ToString(),
+            t.MinDifficulty.ToString(),
+            IsUnlocked: (int)child.StartingLevel >= (int)t.MinDifficulty
+        )).ToList();
     }
 
     public async Task<PagedResponse<TopicSummaryResponse>> GetTopicsPagedAsync(
@@ -48,9 +81,7 @@ public class TopicService : ITopicService
         var query = _uow.Topics.Query();
 
         if (!includeInactive)
-        {
             query = query.Where(t => t.IsActive);
-        }
 
         var mappedQuery = query
             .OrderBy(t => t.OrderIndex)
@@ -61,7 +92,10 @@ public class TopicService : ITopicService
                 t.OrderIndex,
                 t.Lessons.Count(l => l.IsPublished && !l.IsDeleted),
                 t.IsActive,
-                t.CreatedAt
+                t.CreatedAt,
+                t.Access.ToString(),
+                t.MinDifficulty.ToString(),
+                true // Admin paged - luôn unlocked
             ));
 
         return await mappedQuery.ToPagedResponseAsync(pageNumber, pageSize, ct);
@@ -80,8 +114,7 @@ public class TopicService : ITopicService
     public async Task<TopicResponse> CreateTopicAsync(
         CreateTopicRequest request, CancellationToken ct = default)
     {
-        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records,
-        // ngăn tạo topic trùng tên với topic đã bị xóa mềm.
+        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records
         var exists = await _uow.Topics.Query()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(t => t.Name.ToLower() == request.Name.ToLower(), ct);
@@ -105,7 +138,9 @@ public class TopicService : ITopicService
             Description = request.Description,
             IconUrl = request.IconUrl,
             OrderIndex = request.OrderIndex,
-            IsActive = true
+            IsActive = true,
+            Access = ParseEnum<AccessType>(request.Access ?? "Free"),
+            MinDifficulty = ParseEnum<DifficultyLevel>(request.MinDifficulty ?? "Beginner")
         };
 
         await _uow.Topics.AddAsync(topic, ct);
@@ -122,7 +157,7 @@ public class TopicService : ITopicService
             .FirstOrDefaultAsync(t => t.Id == topicId, ct)
             ?? throw new NotFoundException("Topic");
 
-        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records khi kiểm tra trùng tên
+        // [FIX #7] Dùng IgnoreQueryFilters() để phát hiện cả soft-deleted records
         var duplicate = await _uow.Topics.Query()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(t => t.Name.ToLower() == request.Name.ToLower() && t.Id != topicId, ct);
@@ -145,6 +180,8 @@ public class TopicService : ITopicService
         topic.IconUrl = request.IconUrl;
         topic.OrderIndex = request.OrderIndex;
         topic.IsActive = request.IsActive;
+        topic.Access = ParseEnum<AccessType>(request.Access ?? "Free");
+        topic.MinDifficulty = ParseEnum<DifficultyLevel>(request.MinDifficulty ?? "Beginner");
 
         _uow.Topics.Update(topic);
         await _uow.SaveChangesAsync(ct);
@@ -159,11 +196,9 @@ public class TopicService : ITopicService
             .FirstOrDefaultAsync(t => t.Id == topicId, ct)
             ?? throw new NotFoundException("Topic");
 
-        // Không cho xóa nếu còn lesson đã published
         var hasPublished = topic.Lessons.Any(l => l.IsPublished && !l.IsDeleted);
         if (hasPublished)
-            throw new AppException(
-                "Cannot delete a topic that has published lessons. Unpublish all lessons first.");
+            throw new AppException("Cannot delete a topic that has published lessons. Unpublish all lessons first.");
 
         topic.IsDeleted = true;
         _uow.Topics.Update(topic);
@@ -194,14 +229,21 @@ public class TopicService : ITopicService
             .FirstOrDefaultAsync(t => t.Id == topicId, ct)
             ?? throw new NotFoundException("Topic");
 
-        // Không cho xóa vĩnh viễn nếu còn lesson đã published
         var hasPublished = topic.Lessons.Any(l => l.IsPublished && !l.IsDeleted);
         if (hasPublished)
-            throw new AppException(
-                "Cannot permanently delete a topic that has published lessons. Unpublish or remove lessons first.");
+            throw new AppException("Cannot permanently delete a topic that has published lessons. Unpublish or remove lessons first.");
 
         _uow.Topics.Remove(topic);
         await _uow.SaveChangesAsync(ct);
+    }
+
+    // ── Helpers ─────────────────────────────────────────────
+
+    private static T ParseEnum<T>(string value) where T : struct, Enum
+    {
+        if (!Enum.TryParse<T>(value, ignoreCase: true, out var result))
+            throw new AppException($"Invalid value '{value}' for {typeof(T).Name}.");
+        return result;
     }
 
     private static TopicResponse MapToResponse(Topic t) => new(
@@ -212,6 +254,8 @@ public class TopicService : ITopicService
         OrderIndex: t.OrderIndex,
         IsActive: t.IsActive,
         TotalLessons: t.Lessons?.Count(l => l.IsPublished && !l.IsDeleted) ?? 0,
-        CreatedAt: t.CreatedAt
+        CreatedAt: t.CreatedAt,
+        Access: t.Access.ToString(),
+        MinDifficulty: t.MinDifficulty.ToString()
     );
 }

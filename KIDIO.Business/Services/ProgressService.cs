@@ -31,11 +31,24 @@ public class ProgressService : IProgressService
             throw new ForbiddenException("You do not have access to this child profile.");
 
         // Verify lesson tồn tại và đã published
-        var lesson = await _uow.Lessons.GetByIdAsync(request.LessonId, ct)
+        var lesson = await _uow.Lessons.Query()
+            .Include(l => l.Topic)
+            .FirstOrDefaultAsync(l => l.Id == request.LessonId, ct)
             ?? throw new NotFoundException("Lesson");
 
         if (!lesson.IsPublished)
             throw new AppException("This lesson is not available.");
+
+        // ─── KIỂM TRA QUYỀN TRUY CẬP VIP ───────────────────────────────────
+        // Nếu Topic là Premium, kiểm tra phụ huynh có tài khoản VIP không
+        if (lesson.Topic.Access == KIDIO.Common.Enums.AccessType.Premium)
+        {
+            var parent = await _uow.Users.GetByIdAsync(child.ParentId, ct);
+            var isPremium = parent?.PremiumExpiryDate != null && parent.PremiumExpiryDate > DateTime.UtcNow;
+            if (!isPremium)
+                throw new ForbiddenException("This topic requires a Premium subscription.");
+        }
+        // ────────────────────────────────────────────────────────────────────
 
         // Validate score
         if (request.ScorePercent < 0 || request.ScorePercent > 100)
