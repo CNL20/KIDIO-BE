@@ -1261,7 +1261,7 @@ namespace KIDIO.Data.Seed
                         IconUrl = seedTopic.IconUrl,
                         OrderIndex = nextTopicOrder++,
                         IsActive = true,
-                        MinDifficulty = DifficultyLevel.Beginner,
+                        LevelNumber = 1,
                         Lessons = new List<Lesson>()
                     };
 
@@ -1353,10 +1353,10 @@ namespace KIDIO.Data.Seed
             }
 
             // Fix corrupted data from previous bug where enum defaults to 0
-            var corruptTopics = await db.Topics.IgnoreQueryFilters().Where(t => (int)t.MinDifficulty == 0).ToListAsync();
+            var corruptTopics = await db.Topics.IgnoreQueryFilters().Where(t => t.LevelNumber <= 0).ToListAsync();
             if (corruptTopics.Any())
             {
-                foreach(var t in corruptTopics) t.MinDifficulty = DifficultyLevel.Beginner;
+                foreach(var t in corruptTopics) t.LevelNumber = 1;
                 await db.SaveChangesAsync();
             }
 

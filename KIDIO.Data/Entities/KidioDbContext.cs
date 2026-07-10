@@ -93,8 +93,8 @@ namespace KIDIO.Data.Entities
             // Topic
             modelBuilder.Entity<Topic>(e =>
             {
-                e.HasIndex(t => t.OrderIndex).IsUnique();
-                e.Property(t => t.MinDifficulty).HasDefaultValue(DifficultyLevel.Beginner);
+                e.HasIndex(t => new { t.LevelNumber, t.OrderIndex }).IsUnique();
+                e.Property(t => t.LevelNumber).HasDefaultValue(1);
             });
 
             // Lesson -> Topic

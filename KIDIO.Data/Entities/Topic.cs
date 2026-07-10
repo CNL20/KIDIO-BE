@@ -18,7 +18,7 @@ namespace KIDIO.Data.Entities
 
         // --- VIP / Placement access control ---
         public AccessType Access { get; set; } = AccessType.Free;
-        public DifficultyLevel MinDifficulty { get; set; } = DifficultyLevel.Beginner;
+        public int LevelNumber { get; set; } = 1;
 
         public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
     }

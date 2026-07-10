@@ -3,6 +3,7 @@ using System;
 using KIDIO.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KIDIO.Data.Migrations
 {
     [DbContext(typeof(KidioDbContext))]
-    partial class KidioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710111819_ReplaceMinDifficultyWithLevelNumber")]
+    partial class ReplaceMinDifficultyWithLevelNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -442,7 +445,7 @@ namespace KIDIO.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LevelNumber", "OrderIndex")
+                    b.HasIndex("OrderIndex")
                         .IsUnique();
 
                     b.ToTable("Topics");

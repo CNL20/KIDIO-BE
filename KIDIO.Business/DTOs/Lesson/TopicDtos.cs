@@ -6,7 +6,8 @@ public record CreateTopicRequest(
     string? IconUrl,
     int OrderIndex,
     string? Access,         // "Free" | "Premium", default Free
-    string? MinDifficulty,  // "Beginner" | "Elementary" | "PreIntermediate", default Beginner
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "LevelNumber must be at least 1")]
+    int? LevelNumber,       // Default 1
     bool? IsActive = true
 );
 
@@ -17,7 +18,8 @@ public record UpdateTopicRequest(
     int OrderIndex,
     bool IsActive,
     string? Access,         // "Free" | "Premium"
-    string? MinDifficulty   // "Beginner" | "Elementary" | "PreIntermediate"
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "LevelNumber must be at least 1")]
+    int? LevelNumber        // Default 1
 );
 
 public record TopicResponse(
@@ -30,7 +32,7 @@ public record TopicResponse(
     int TotalLessons,
     DateTime CreatedAt,
     string Access,          // "Free" | "Premium"
-    string MinDifficulty    // "Beginner" | "Elementary" | "PreIntermediate"
+    int LevelNumber         // e.g. 1, 2, 3...
 );
 
 public record TopicSummaryResponse(
@@ -42,6 +44,6 @@ public record TopicSummaryResponse(
     bool IsActive,
     DateTime CreatedAt,
     string Access,          // "Free" | "Premium"
-    string MinDifficulty,   // "Beginner" | "Elementary" | "PreIntermediate"
-    bool IsUnlocked         // computed: true nếu child.StartingLevel >= topic.MinDifficulty
+    int LevelNumber,        // e.g. 1, 2, 3...
+    bool IsUnlocked         // computed securely by backend
 );

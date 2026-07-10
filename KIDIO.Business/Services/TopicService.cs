@@ -27,7 +27,7 @@ public class TopicService : ITopicService
             query = query.Where(t => t.IsActive);
 
         return await query
-            .OrderBy(t => t.OrderIndex)
+            .OrderBy(t => t.LevelNumber).ThenBy(t => t.OrderIndex)
             .Select(t => new TopicSummaryResponse(
                 t.Id,
                 t.Name,
@@ -37,13 +37,12 @@ public class TopicService : ITopicService
                 t.IsActive,
                 t.CreatedAt,
                 t.Access.ToString(),
-                t.MinDifficulty.ToString(),
+                t.LevelNumber,
                 true // Admin luôn thấy tất cả là unlocked
             ))
             .ToListAsync(ct);
     }
 
-    // Lấy Topic theo ChildId để tính IsUnlocked dựa trên StartingLevel của bé
     public async Task<List<TopicSummaryResponse>> GetAllTopicsForChildAsync(
         Guid childId, CancellationToken ct = default)
     {
@@ -52,14 +51,49 @@ public class TopicService : ITopicService
 
         var topics = await _uow.Topics.Query()
             .Where(t => t.IsActive)
-            .OrderBy(t => t.OrderIndex)
+            .OrderBy(t => t.LevelNumber).ThenBy(t => t.OrderIndex)
             .Select(t => new
             {
                 t.Id, t.Name, t.IconUrl, t.OrderIndex, t.IsActive, t.CreatedAt,
-                t.Access, t.MinDifficulty,
-                TotalLessons = t.Lessons.Count(l => l.IsPublished && !l.IsDeleted)
+                t.Access, t.LevelNumber,
+                TotalLessons = t.Lessons.Count(l => l.IsPublished && !l.IsDeleted),
+                LessonIds = t.Lessons.Where(l => l.IsPublished && !l.IsDeleted).Select(l => l.Id).ToList()
             })
             .ToListAsync(ct);
+
+        var completedLessonList = await _uow.LessonProgresses.Query()
+            .Where(p => p.ChildId == childId && p.IsCompleted)
+            .Select(p => p.LessonId)
+            .ToListAsync(ct);
+        var completedLessonIds = completedLessonList.ToHashSet();
+
+        int currentLevel = (int)child.StartingLevel;
+        var groupedLevels = topics.GroupBy(t => t.LevelNumber).OrderBy(g => g.Key).ToList();
+        
+        foreach (var group in groupedLevels)
+        {
+            if (group.Key < currentLevel) continue;
+            
+            bool isLevelCompleted = true;
+            foreach (var t in group)
+            {
+                bool isTopicCompleted = t.TotalLessons > 0 && t.LessonIds.All(id => completedLessonIds.Contains(id));
+                if (!isTopicCompleted && t.TotalLessons > 0)
+                {
+                    isLevelCompleted = false;
+                    break;
+                }
+            }
+            
+            if (isLevelCompleted)
+            {
+                currentLevel = group.Key + 1;
+            }
+            else
+            {
+                break;
+            }
+        }
 
         return topics.Select(t => new TopicSummaryResponse(
             t.Id,
@@ -70,8 +104,8 @@ public class TopicService : ITopicService
             t.IsActive,
             t.CreatedAt,
             t.Access.ToString(),
-            t.MinDifficulty.ToString(),
-            IsUnlocked: (int)child.StartingLevel >= (int)t.MinDifficulty
+            t.LevelNumber,
+            IsUnlocked: t.LevelNumber <= currentLevel
         )).ToList();
     }
 
@@ -91,7 +125,7 @@ public class TopicService : ITopicService
         }
 
         var mappedQuery = query
-            .OrderBy(t => t.OrderIndex)
+            .OrderBy(t => t.LevelNumber).ThenBy(t => t.OrderIndex)
             .Select(t => new TopicSummaryResponse(
                 t.Id,
                 t.Name,
@@ -101,7 +135,7 @@ public class TopicService : ITopicService
                 t.IsActive,
                 t.CreatedAt,
                 t.Access.ToString(),
-                t.MinDifficulty.ToString(),
+                t.LevelNumber,
                 true // Admin paged - luôn unlocked
             ));
 
@@ -133,7 +167,7 @@ public class TopicService : ITopicService
                 t.IsActive,
                 t.CreatedAt,
                 t.Access.ToString(),
-                t.MinDifficulty.ToString(),
+                t.LevelNumber,
                 true
             ));
 
@@ -164,12 +198,12 @@ public class TopicService : ITopicService
         if (exists is not null && exists.IsDeleted)
             throw new AppException("A topic with this name was previously deleted. Please restore it or use a different name.");
 
-        // Kiểm tra OrderIndex trùng
+        var targetLevel = request.LevelNumber ?? 1;
         var orderIndexExists = await _uow.Topics.FirstOrDefaultAsync(
-            t => t.OrderIndex == request.OrderIndex, ct);
+            t => t.OrderIndex == request.OrderIndex && t.LevelNumber == targetLevel, ct);
 
         if (orderIndexExists is not null)
-            throw new AppException("A topic with this OrderIndex already exists.");
+            throw new AppException($"A topic with OrderIndex {request.OrderIndex} already exists in Level {targetLevel}.");
 
         var topic = new Topic
         {
@@ -179,7 +213,7 @@ public class TopicService : ITopicService
             OrderIndex = request.OrderIndex,
             IsActive = request.IsActive ?? true,
             Access = ParseEnum<AccessType>(request.Access ?? "Free"),
-            MinDifficulty = ParseEnum<DifficultyLevel>(request.MinDifficulty ?? "Beginner")
+            LevelNumber = request.LevelNumber ?? 1
         };
 
         await _uow.Topics.AddAsync(topic, ct);
@@ -207,12 +241,13 @@ public class TopicService : ITopicService
         if (duplicate is not null && duplicate.IsDeleted)
             throw new AppException("A previously deleted topic has this name. Please use a different name.");
 
-        // Kiểm tra OrderIndex trùng với topic khác
+        // Kiểm tra OrderIndex trùng với topic khác trong cùng Level
+        var targetLevel = request.LevelNumber ?? 1;
         var orderIndexDuplicate = await _uow.Topics.FirstOrDefaultAsync(
-            t => t.OrderIndex == request.OrderIndex && t.Id != topicId, ct);
+            t => t.OrderIndex == request.OrderIndex && t.LevelNumber == targetLevel && t.Id != topicId, ct);
 
         if (orderIndexDuplicate is not null)
-            throw new AppException("A topic with this OrderIndex already exists.");
+            throw new AppException($"A topic with OrderIndex {request.OrderIndex} already exists in Level {targetLevel}.");
 
         topic.Name = request.Name.Trim();
         topic.Description = request.Description;
@@ -220,7 +255,7 @@ public class TopicService : ITopicService
         topic.OrderIndex = request.OrderIndex;
         topic.IsActive = request.IsActive;
         topic.Access = ParseEnum<AccessType>(request.Access ?? "Free");
-        topic.MinDifficulty = ParseEnum<DifficultyLevel>(request.MinDifficulty ?? "Beginner");
+        topic.LevelNumber = request.LevelNumber ?? 1;
 
         _uow.Topics.Update(topic);
         await _uow.SaveChangesAsync(ct);
@@ -295,6 +330,6 @@ public class TopicService : ITopicService
         TotalLessons: t.Lessons?.Count(l => l.IsPublished && !l.IsDeleted) ?? 0,
         CreatedAt: t.CreatedAt,
         Access: t.Access.ToString(),
-        MinDifficulty: t.MinDifficulty.ToString()
+        LevelNumber: t.LevelNumber
     );
 }
