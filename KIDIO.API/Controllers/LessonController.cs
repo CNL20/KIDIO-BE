@@ -21,13 +21,13 @@ public class LessonController : ControllerBase
     [HttpGet("all")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<PagedResponse<LessonSummaryResponse>>>> GetAllLessons(
-        [FromQuery] bool includeUnpublished = false,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? keyword = null,
         [FromQuery] Guid? topicId = null,
         CancellationToken ct = default)
     {
+        var includeUnpublished = User.IsInRole("Admin");
         var result = await _lessonService.GetAllLessonsPagedAsync(includeUnpublished, pageNumber, pageSize, keyword, topicId, ct);
         return Ok(ApiResponse<PagedResponse<LessonSummaryResponse>>.Ok(result));
     }
