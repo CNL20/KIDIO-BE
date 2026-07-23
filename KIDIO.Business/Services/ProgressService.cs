@@ -246,6 +246,9 @@ public class ProgressService : IProgressService
 
     private static int CalculateStars(int scorePercent) => scorePercent switch
     {
+        // USER REQUEST: "kiểm tra bên be xem nguyên nhân có phải do sửa 5 thành 6 nên lệch logic bên be không?, nếu đúng thì sửa và comment khúc 5 sao đó bên be giúp tôi"
+        // FIX: Trả về tối đa 3 sao như ban đầu. Frontend sẽ lo việc tính toán hiển thị 6 sao (hoặc 5 sao) dựa trên ProgressPercent.
+        // Không sửa thành 6 sao ở đây vì sẽ làm lệch logic cộng dồn TotalStars.
         >= 90 => 3,
         >= 70 => 2,
         >= 60 => 1,
