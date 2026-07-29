@@ -56,7 +56,7 @@ namespace KIDIO.Business.Services.Payment
             {
                 OrderCode = orderCode,
                 Amount = (int)plan.Price,
-                Description = "KIDIO Premium",
+                Description = $"KIDIO {plan.Name}",
                 Items = items,
                 CancelUrl = request.CancelUrl,
                 ReturnUrl = request.ReturnUrl
